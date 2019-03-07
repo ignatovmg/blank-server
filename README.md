@@ -7,18 +7,19 @@ Django + Postgre + Bootstrap server template (in development).
 3. Copy example.config to ~/.template_server_rc and specify 
 database credentials (also change email settings). Remote 
 settings are not effective yet
-4. Populate databases \
-`python manage.py makemigrations`\
+4. In the project root directory create `storage/jobs/` and `storage/tmp/`, and add an empty file .blank to `storage/tmp/`
+5. Populate database   
+`python manage.py makemigrations`   
 `python manage.py migrate`
-5. Create superuser \
+6. Create a superuser   
 `python manage.py createsuperuser --name admin`
-6. Run server \
-`python manage.py runserver`\
-or if you want to use a specific port\
+7. Run server   
+`python manage.py runserver`   
+or if you want to use a specific port    
 `python manage.py runserver 8000`
-7. Check if admin site works\
+8. Check if admin site works   
 `localhost:8000/admin`
-8. Read Django tutorial for further development
+9. Read Django tutorial for further development
 
 ### Some details
 This is a server shell. The frontend is located in `core/`, so the machinery 
