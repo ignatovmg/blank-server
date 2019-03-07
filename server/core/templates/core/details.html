@@ -1,0 +1,28 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+    <table class="table table-hover my-fixed-width">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>User</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+                <tr><td>{{ job.job_id }}</td>
+                    <td>{{ job.job_name }}</td>
+                    <td>{{ job.user }}</td>
+                    <td>{{ job.get_status_display }}</td>
+                </tr>
+        </tbody>
+    </table>
+
+    <div class="my-fixed-width text-center">
+        <h2>Job details</h2>
+    </div>
+
+{% endblock %}

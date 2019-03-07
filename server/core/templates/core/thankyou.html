@@ -1,0 +1,14 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+
+<div class="jumbotron">
+	<h1>Thank you for signing up</h1>
+	<p>
+        <a class="btn btn-md btn-default" href={% url 'login' %} role="button">
+        You can log in now using your credentials &raquo;
+        </a>
+    </p>
+</div>
+
+{% endblock %}

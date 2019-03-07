@@ -1,0 +1,65 @@
+body {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.my-col-centered{
+    float: none;
+    margin: 0 auto;
+}
+
+.my-fixed-width {
+    max-width: 500px;
+    margin: 0 auto;
+    float: none;
+}
+
+.my-padded {
+    padding: 15px;
+}
+
+.my-signin-form {
+    max-width: 300px;
+    margin: 0 auto;
+    float: none;
+    margin-bottom: 25px;
+}
+
+.my-home-form {
+    max-width: 300px;
+    margin: 0 auto;
+    float: none;
+    margin-bottom: 25px;
+}
+
+
+.navbar {
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+
+
+/* error popups */
+.main-content {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.error-popup {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+
+
+
+
+
+
+
+
+
+
