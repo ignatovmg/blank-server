@@ -1,8 +1,12 @@
-# custom
+# project specific
+.local_params
 storage/tmp/*
 storage/jobs/*
 .idea/
-migrations/*
+server/core/migrations/[0-9]*
+
+# Mac
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

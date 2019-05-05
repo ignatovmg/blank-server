@@ -1,14 +1,21 @@
 {% extends "core/base.html" %}
 {% load static %}
 
+{% block header_add %}
+    <link rel='stylesheet' type='text/css' href={% static "core/css/progress-bar.css" %} />
+{% endblock %}
+
 {% block content %}
-<table class="table table-hover my-fixed-width">
+<table class="table table-hover table-bordered table-responsive my-fixed-width" style="text-align: center;">
     <thead>
         <tr>
-            <th>Id</th>
-            <th>Name</th>
-            <th>User</th>
-            <th>Status</th>
+            <th style="text-align: center;">Id</th>
+            <th style="text-align: center;">Name</th>
+            <th style="text-align: center;">User</th>
+            <th style="text-align: center;">Status</th>
+            {% if user.is_superuser %}
+                <th style="text-align: center;">Restart</th>
+            {% endif %}
         </tr>
     </thead>
 
@@ -18,27 +25,52 @@
                 <td><a href="{% url 'details' %}?job_id={{ job.job_id }}">{{ job.job_id }}</a></td>
                 <td>{{ job.job_name }}</td>
                 <td>{{ job.user }}</td>
-                <td>{{ job.get_status_display }}</td>
+                <td>
+                    {{ job.get_status_display }}{{ job.get_queue_status_display }}
+                    <div class="job-progress
+                    {% if job.status == "R.ERR" or job.status == "L.ERR" %}
+                        job-progress-error
+                    {% elif job.status == "L.STR"%}
+                        job-progress-start
+                    {% elif job.status == "L.PRE" or job.status == "L.CPR" %}
+                        job-progress-prepare
+                    {% elif job.status == "R.SPL" %}
+                        job-progress-sampling
+                    {% elif job.status == "R.MIN" %}
+                        job-progress-minimization
+                    {% elif job.status == "R.CLU" %}
+                        job-progress-clustering
+                    {% elif job.status == "R.CPY" or job.status == "L.FIN" %}
+                        job-progress-complete
+                    {% elif job.status == "L.CPL" %}
+                        job-progress-complete
+                    {% endif %}"></div>
+                </td>
+                {% if user.is_superuser %}
+                    <td><a href="{% url 'restart_job' %}?job_id={{ job.job_id }}">Restart</a></td>
+                {% endif %}
             </tr>
         {% endfor %}
     <tbody>
 </table>
 
 <div class="my-fixed-width my-padded text-center">
-    <span class="step-links">
-        {% if jobs.has_previous %}
-            <a href="?page=1">&laquo; first</a>
-            <a href="?page={{ jobs.previous_page_number }}">previous</a>
-        {% endif %}
+    <ul class="pagination pagination-sm">
+        <li {% if not jobs.has_previous %}class="disabled"{% endif %}>
+            <a href="?page=1">First</a>
+        </li>
+        <li {% if not jobs.has_previous %}class="disabled"{% endif %}>
+            <a href="?page={% if jobs.has_previous %}{{ jobs.previous_page_number }}{% else %}#{% endif %}">Previous</a>
+        </li>
 
-        <span class="current">
-            Page {{ jobs.number }} of {{ jobs.paginator.num_pages }}.
-        </span>
+        <li class="active"><a href="#">{{ jobs.number }}</a></li>
 
-        {% if jobs.has_next %}
-            <a href="?page={{ jobs.next_page_number }}">next</a>
-            <a href="?page={{ jobs.paginator.num_pages }}">last &raquo;</a>
-        {% endif %}
-    </span>
+        <li {% if not jobs.has_next %}class="disabled"{% endif %}>
+            <a href="?page={% if jobs.has_next %}{{ jobs.next_page_number }}{% else %}#{% endif %}">Next</a>
+        </li>
+        <li {% if not jobs.has_next %}class="disabled"{% endif %}>
+            <a href="?page={{ jobs.paginator.num_pages }}">Last &raquo;</a>
+        </li>
+    </ul>
 </div>
 {% endblock %}

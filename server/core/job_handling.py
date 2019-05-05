@@ -1,20 +1,22 @@
 import json
 import logging
+import shutil
+import subprocess
+import os
 from copy import deepcopy
 
-from .utils import upload_file, user_tmp_dir, clean_dir
+from .utils import upload_file, user_tmp_dir
 from .models import Job
+from .env import SERVER_DIR
+from .runner.validate import validate
 
-from runner.validate import validate
-from runner.runner import run
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('core')
 
 
-def check_job_input(request):
+def check_user_input(request):
     """
-    Creates a temporary directory in STORAGE/tmp and creates there user/ where
-    raw user input is stored. If any error is encountered, cleans the directory.
+    Creates a temporary directory in `env.STORAGE`/tmp and creates there user/ where
+    the user input is stored. If any error is encountered, removes the directory.
 
     :rtype: tuple(list, path.Path)
     :param request:
@@ -22,14 +24,11 @@ def check_job_input(request):
     """
 
     tmp_dir = None
-    user_dir = None
-    user_fixed_dir = None
-
     try:
         error_list = []
 
         ########################################
-        # create directory to store temporary results
+        # create a directory to store temporary results
         tmp_dir = user_tmp_dir(request.user.username)
         while tmp_dir.exists():
             tmp_dir = user_tmp_dir(request.user.username)
@@ -38,16 +37,16 @@ def check_job_input(request):
         logger.info('Creating %s' % tmp_dir)
 
         ########################################
-        # save raw user input
+        # save user input
         user_dir = tmp_dir.joinpath('user')
         logger.info('Creating directory %s' % user_dir)
         user_dir.mkdir_p()
 
         logger.info('Saving POST dictionary to %s' % user_dir)
-        with open(user_dir.joinpath('user.post'), 'w') as f:
+        with open(user_dir.joinpath('user.json'), 'w') as f:
             post_dict = deepcopy(request.POST)
             del post_dict['csrfmiddlewaretoken']
-            json.dump(post_dict, f)
+            json.dump(post_dict, f, indent=4)
 
         logger.info('Saving FILES to %s' % user_dir)
         for name, file in request.FILES.items():
@@ -57,20 +56,16 @@ def check_job_input(request):
         ########################################
         # validate and transform raw user input into something
         # more useful (if needed)
-        user_fixed_dir = tmp_dir.joinpath('user_fixed')
-        user_fixed_dir.mkdir_p()
-        error_list += validate(user_dir, user_fixed_dir)
+        error_list += validate(user_dir)
 
     except:
-        clean_dir(user_dir)
-        clean_dir(user_fixed_dir)
-        clean_dir(tmp_dir)
+        if tmp_dir is not None and tmp_dir.exists():
+            tmp_dir.rmtree_p()
         raise
 
     if error_list:
-        clean_dir(user_dir)
-        clean_dir(user_fixed_dir)
-        clean_dir(tmp_dir)
+        if tmp_dir is not None and tmp_dir.exists():
+            tmp_dir.rmtree_p()
         return error_list, ''
 
     return error_list, tmp_dir
@@ -78,19 +73,39 @@ def check_job_input(request):
 
 def create_job_dir(tmp_dir, job_id):
     """
-    Move temporary directory to a permanent storage
+    Move temporary directory to the permanent storage
 
-    :param tmp_dir: Temporary job directory
-    :param job_id: Job ID
+    :param `path.Path` tmp_dir: Temporary job directory
+    :param int job_id: Job ID
     :return:
     """
+    logger.info('Creating job directory ..')
     job = Job.objects.get(job_id=job_id)
     job_dir = job.get_dir()
 
-    logger.info('Moving %s --> %s' % (job_dir, tmp_dir))
+    if job_dir.isdir():
+        shutil.rmtree(job_dir)
+
+    logger.info('Moving %s --> %s' % (tmp_dir, job_dir))
     tmp_dir.move(job_dir)
 
 
-def submit_job(job):
-    run(job)
+def submit_job(job_id):  # TODO: see if we can change this
+    """
+    Run job with the given id
 
+    :param int job_id:
+    :return:
+    """
+    if os.system('ps aux | grep -v grep | grep -o "job_id=%i"' % job_id) == 0:
+        logger.warning('Job %i is still running!' % job_id)
+        return ['Job %i is still running!' % job_id] 
+
+    job = Job.objects.get(job_id=job_id)
+    job.reset()
+    cmd = 'from core.runner.runner import run_job; from core.models import Job; run_job(Job.objects.get(job_id=%i))' % job_id
+    exe = SERVER_DIR.joinpath('manage.py').abspath()
+    with open(job.get_dir().joinpath('stdout.log'), 'a') as o, open(job.get_dir().joinpath('stderr.log'), 'a') as e:
+        subprocess.Popen(['python', exe, 'shell', '-c', '%s' % cmd], stdout=o, stderr=e)
+    
+    return []

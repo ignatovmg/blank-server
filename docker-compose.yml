@@ -1,0 +1,57 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: buildfiles/Dockerfile.web
+    image: web:latest
+    command: gunicorn server.wsgi:application --bind 0.0.0.0:8000 --reload --timeout 30
+    volumes:
+      - ./server:/code
+      - ./storage:/storage
+      - static_volume:/staticfiles
+      - media_volume:/mediafiles
+    environment:
+      - LOCAL_DB_HOST=db
+      - LOCAL_DB_NAME=server-template
+      - LOCAL_DB_USER=postgres
+      - LOCAL_ROOT=/code
+      - LOCAL_STORAGE=/storage
+      - REMOTE_HOST=${REMOTE_HOST}
+      - REMOTE_USER=${REMOTE_USER}
+      - REMOTE_PASS=${REMOTE_PASS}
+      - REMOTE_STORAGE=${REMOTE_STORAGE}
+      - REMOTE_BIN=${REMOTE_BIN}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - SECRET_KEY=${SECRET_KEY}
+    expose:
+      - 8000
+    depends_on:
+      - db
+    links:
+      - db:db
+  db:
+    image: postgres:10.5-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=server-template
+  nginx:
+    build:
+      context: buildfiles
+      dockerfile: Dockerfile.nginx
+    volumes:
+      - static_volume:/staticfiles
+      - media_volume:/mediafiles
+    ports:
+      - ${LOCAL_PORT}:80
+    depends_on:
+      - web
+      
+volumes:
+  static_volume:
+  media_volume:
+  postgres_data:

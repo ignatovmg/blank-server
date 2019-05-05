@@ -1,16 +1,15 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
 {% load static %}
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title></title>
 
-    <!--echo '<meta http-equiv="refresh" content="300"/>';-->
-
     <meta name="viewport" http-equiv="content-type" content="text/html; charset=utf-8; width=device-width; initial-scale=1"/>
 
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css"/>
 
     <!-- jQuery library -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -18,23 +17,17 @@
     <!-- Latest compiled JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
 
-    <script src="https://unpkg.com/ngl"></script>
+    <link rel='stylesheet' type="text/css" href='{% static "core/css/style.css" %}'/>
 
-    {# <link rel="shortcut icon" href="favicon.png" type="image/png"/> #}
-
-    <link rel='stylesheet' type="text/css" href="{% static "core/css/style.css" %}"/>
-
-    <script src="{% static "core/javascript/common.js" %}"></script>
+    <script src="{% static 'core/javascript/common.js' %}"></script>
 
     {% block header_add %}{% endblock %}
-
-    {# <link rel="shortcut icon" href="favicon.png" type="image/png" />#}
 </head>
 
 {% autoescape on %}
 <body>
-    <div class="container">
-        <nav class="navbar navbar-default">
+    <div class="container" style="position: relative;">
+        <nav class="navbar navbar-inverse">
             <div class="container-fluid">
                 <div class="navbar-header">
                     <button type="button"
@@ -65,6 +58,12 @@
                             <li {% if request.resolver_match.url_name == "results" %}class='active'{% endif %}>
                                 <a href={% url "results" %}>Results</a>
                             </li>
+
+                            {% if user.is_superuser %}
+                                <li {% if request.resolver_match.url_name == "admin" %}class='active'{% endif %}>
+                                    <a href="/admin">Admin</a>
+                                </li>
+                            {% endif %}
                         {% endif %}
 
                         <li {% if request.resolver_match.url_name == "publications" %}class='active'{% endif %}>
@@ -96,24 +95,24 @@
         </nav>
 
         {% if errors %}
-            {% for error in errors %}
-                <div class="main-content error-popup text-center alert alert-danger alert-dismissable fade in">
-                    <a href="#" class="close" data-dismiss="alert" aria-label="close">x</a>
-                    <strong>Error - </strong>{{ error }}
-                </div>
-            {% endfor %}
+            <div class="main-content error-popup alert alert-danger alert-dismissable fade in">
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">x</a>
+                <br>
+                {% for error in errors %}
+                    <div style="padding-left:20%">
+                        <strong>Error - </strong>{{ error }}
+                        <br><br>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
         {% block content %}{% endblock %}
 
         <div class="well well-lg text-center small">
             {{ SERVER_NAME }} should only be used for noncommercial purposes.
-            <br/>
-            <a href='http://abcgroup.cluspro.org'>ABC Group</a> and
-            <a href='https://structure.bu.edu/'>Structural Bioinformatics Lab</a>
-            <br/>
-            <a href='https://www.bu.edu/'>Boston University</a> and
-            <a href='http://www.stonybrook.edu'>Stony Brook University</a>
+            <br>
+            <a href='#'>Affiliations</a>
         </div>
     </div>
 </body>

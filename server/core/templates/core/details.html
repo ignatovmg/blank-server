@@ -2,27 +2,53 @@
 {% load static %}
 
 {% block content %}
-    <table class="table table-hover my-fixed-width">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>User</th>
-                <th>Status</th>
-            </tr>
-        </thead>
+    <div class="row my-fixed-width">
+        <div class="text-center">
+            <h2>Job {{ job.job_id }}</h2>
+            <br>
+            <table class="table table-hover table-bordered table-responsive my-fixed-width">
+                <thead>
+                <tr>
+                    <th style="text-align: center;">Id</th>
+                    <th style="text-align: center;">Name</th>
+                    <th style="text-align: center;">User</th>
+                    <th style="text-align: center;">Status</th>
+                </tr>
+                </thead>
 
-        <tbody>
-                <tr><td>{{ job.job_id }}</td>
+                <tbody>
+                <tr>
+                    <td>{{ job.job_id }}</td>
                     <td>{{ job.job_name }}</td>
                     <td>{{ job.user }}</td>
-                    <td>{{ job.get_status_display }}</td>
+                    <td>{% if job.error %}{{ job.error }}{% else %}{{ job.get_status_display }}{% endif %}</td>
                 </tr>
-        </tbody>
-    </table>
+                </tbody>
+            </table>
+        </div>
 
-    <div class="my-fixed-width text-center">
-        <h2>Job details</h2>
+        <hr>
+        <div style="display: table; margin: auto">
+            <h4 align="center">Details</h4>
+            <br>
+            {% if job.details_json %}
+                <p>Job name: {{ job.jobname }}</p>
+            {% endif %}
+        </div>
+
+        {% if job.status == 'L.CPL' %}
+            <hr>
+            <h4 align="center">Downloads</h4>
+            <br>
+            <div style="display: table; margin: auto">
+                <a style="width: 100%" type="button" class="btn btn-default"
+                   href="{% url 'download_file' %}?job_id={{ job.job_id }}&content=output.txt">
+                    <span class="glyphicon glyphicon-download-alt"></span>
+                    Download output.txt
+                </a>
+                <br>
+            </div>
+        {% endif %}
+        <br/><br/><br/>
     </div>
-
 {% endblock %}

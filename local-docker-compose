@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+
+CACHE_FILE = '.local_params'
+
+
+def get_params_user():
+    from getpass import getpass
+    import random
+    import string
+
+    params = {}
+
+    scc_host = input('Enter your remote hostname: [default: scc1.bu.edu] ').strip()
+    if not scc_host:
+        scc_host = 'scc1.bu.edu'
+
+    scc_user = input('Enter your remote username: ').strip()
+
+    scc_password = getpass('Enter your remote password: ')
+
+    example_storage = '/path/to/your/directory/jobs'
+    storage_prompt = 'Remote job storage (you should have write permissions here) [{}]: '.format(example_storage)
+    scc_storage = input(storage_prompt).strip()
+
+    example_bin = '/path/to/your/directory/bin'
+    bin_prompt = 'Binary directory on the remote machine (all required scripts and binaries for remote execution sh\
+    ould be here) [{}]: '.format(example_bin)
+    scc_bin = input(bin_prompt).strip()
+
+    local_port = input('Access server on this local port [default: 8080]: ').strip()
+    if not local_port:
+        local_port = '8080'
+
+    email_host = input('Enter email server name [example: smtp.gmail.com]: ').strip()
+    email_user = input('Enter email username [example: if your email is "username@gmail.com" - enter "username"]: ').strip()
+    email_password = getpass('Enter your email password: ')
+
+    print('Generating the secret key')
+    length = random.randint(50, 70)
+    secret_key = ''.join([random.choice(string.printable + string.digits) for n in range(length)])
+
+    params['REMOTE_HOST'] = scc_host
+    params['REMOTE_USER'] = scc_user
+    params['REMOTE_PASS'] = scc_password
+    params['REMOTE_STORAGE'] = scc_storage
+    params['REMOTE_BIN'] = scc_bin
+    params['EMAIL_HOST'] = email_host
+    params['EMAIL_USER'] = email_user
+    params['EMAIL_PASS'] = email_password
+    params['LOCAL_PORT'] = local_port
+    params['SECRET_KEY'] = secret_key
+
+    return params
+
+
+def get_params_file():
+    import json
+
+    with open(CACHE_FILE, "r") as f:
+        return json.load(f)
+
+
+def main():
+    import os
+    import json
+
+    try:
+        params = get_params_file()
+        print('Read parameters from cached parameter file "{}"'.format(CACHE_FILE))
+    except:
+        params = get_params_user()
+
+        with os.fdopen(os.open(CACHE_FILE, os.O_WRONLY | os.O_CREAT, 0o600), 'w') as out:
+            json.dump(params, out, indent=4)
+
+        print('Wrote parameters to local cache file "{}"'.format(CACHE_FILE))
+        print('Remove this file to re-input parameters')
+
+    os.environ.update(params)
+
+    from compose.cli.main import main as compose_main
+    sys.argv[:] = ['docker-compose'] + sys.argv[1:]
+    compose_main()
+    return 0
+
+
+if __name__ == '__main__':
+    import sys
+
+    sys.exit(main())

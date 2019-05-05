@@ -1,28 +1,39 @@
 {% extends "core/base.html" %}
 {% load static %}
 
+{% block header_add %}
+    <link rel='stylesheet' type='text/css' href={% static "core/css/home.css" %} />
+    <link rel='stylesheet' type='text/css' href={% static "core/css/spinner.css" %} />
+    <script src={% static "core/javascript/home.js" %}></script>
+{% endblock %}
+
 {% block content %}
-<form class="my-home-form" enctype='multipart/form-data' action='index' method='post'>
-{% csrf_token %}
+    <form class="form-jobs" enctype='multipart/form-data' action='index' method='post'>
+    {% csrf_token %}
+        {# Job name #}
+        <div class="input-group jobs-field">
+            {# Tooltip #}
+            <span class='input-group-addon'
+                  title="Job name"
+                  data-placement="auto left"
+                  data-toggle="popover"
+                  data-trigger="hover"
+                  data-content="Enter your job name here">
+                <a style="color:black;"><i class='glyphicon glyphicon-tags'></i></a>
+            </span>
 
-    {#% for field in form.fields %#}
-    <div class="input-group jobs-field">
-        <span class='input-group-addon'
-              data-placement="auto left"
-              data-toggle="popover"
-              data-trigger="hover"
-              data-content="{{ form.jobname.help_text }}">
+            <input id="jobname" type='text' class='form-control input-md' name="jobname" placeholder="Job name" required autofocus/>
+        </div>
 
-            <i class='glyphicon glyphicon-tags'></i>
-        </span>
-        {{ form.jobname }}
-    </div>
-    {#% endfor %#}
+        {# Submit button #}
+        <div class="form-group jobs-submit text-center">
+            <button type="submit" class="btn btn-primary btn-md" id="submit_button" name="action" value="submit">Submit job</button>
+        </div>
 
-    {# Submit button #}
-    <br>
-	<div class="form-group text-center">
-		<button type="submit" class="btn btn-primary btn-md" name="action" value="submit">Submit job</button>
-	</div>
-</form>
+        <div id="spinner" style="display: none">
+            <p align="center">Processing input..</p>
+            <div class="spinner" style="margin: auto;"></div>
+        </div>
+    </form>
+
 {% endblock %}

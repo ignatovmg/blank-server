@@ -6,14 +6,14 @@ additional context processor
 """
 
 from path import Path
+from server.config import CONFIG
 
-SERVER_NAME = "Brikard"
+SERVER_NAME = "TEMPLATE"
 
 # some paths
 ENV_PATH = Path(__file__).abspath()
-ROOT_DIR = ENV_PATH.dirname().dirname().dirname()
-SERVER_DIR = ROOT_DIR.joinpath('server')
-STORAGE_DIR = ROOT_DIR.joinpath('storage')
+SERVER_DIR = Path(CONFIG['local']['ROOT'])
+STORAGE_DIR = Path(CONFIG['local']['STORAGE'])
 JOBS_DIR = STORAGE_DIR.joinpath('jobs')
 TMP_DIR = STORAGE_DIR.joinpath('tmp')
 CORE_DIR = SERVER_DIR.joinpath('core')
@@ -21,7 +21,7 @@ JOBS_PER_PAGE = 10
 
 # universal template context (added to all templates)
 env = {
-    'SERVER_NAME': SERVER_NAME
+    'SERVER_NAME': SERVER_NAME,
 }
 
 

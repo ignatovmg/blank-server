@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
-import core.config
+from .config import CONFIG
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,12 +21,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'pjkk4de#1io#_wnna%7*%)fj7@n%g2gv$8@54)uy&fz-jo9%)('
+#SECRET_KEY = 'pjkk4de#1io#_wnna%7*%)fj7@n%g2gv$8@54)uy&fz-jo9%)('
+SECRET_KEY = CONFIG['local']['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '0.0.0.0']
 
 
 # Application definition
@@ -82,6 +83,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 7,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -105,14 +109,17 @@ USE_L10N = True
 
 USE_TZ = True
 
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/staticfiles'  #os.path.join(BASE_DIR, 'staticfiles')
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = '/mediafiles'  # os.path.join(BASE_DIR, 'mediafiles')
 
-config = core.config.get_config()
 
 # logging config
 LOGGING = {
@@ -125,14 +132,14 @@ LOGGING = {
         }
     },
     'handlers': {
-        'CCC': {
+        'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
-        }
+        },
     },
     'loggers': {
         'core': {
-            'handlers': ['CCC'],
+            'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
         }
@@ -145,17 +152,18 @@ LOGGING = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config['database']['NAME'],
-        'HOST': config['database']['HOST'],
-        'USER': config['database']['USER'],
-        'PASSWORD': config['database']['PASSWORD']
+        'NAME': CONFIG['database']['NAME'],
+        'HOST': CONFIG['database']['HOST'],
+        'USER': CONFIG['database']['USER'],
+        'PASSWORD': CONFIG['database']['PASS'],
+        'PORT': CONFIG['database']['PORT']
     }
 }
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
-EMAIL_HOST = config['email']['HOST']
-EMAIL_HOST_USER = config['email']['USER']
-EMAIL_HOST_PASSWORD = config['email']['PASSWORD']
-EMAIL_PORT = config['email']['PORT']
+EMAIL_HOST = CONFIG['email']['HOST']
+EMAIL_HOST_USER = CONFIG['email']['USER']
+EMAIL_HOST_PASSWORD = CONFIG['email']['PASS']
+EMAIL_PORT = CONFIG['email']['PORT']

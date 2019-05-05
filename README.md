@@ -1,27 +1,15 @@
-# Server template
-Django + Postgre + Bootstrap server template (in development).
- 
-### HOWTO
-1. Install the requirements.
-2. Create a Postgre database
-3. Copy example.config to ~/.template_server_rc and specify 
-database credentials (also change email settings). Remote 
-settings are not effective yet
-4. In the project root directory create `storage/jobs/` and `storage/tmp/`, and add an empty file .blank to `storage/tmp/`
-5. Populate database   
-`python manage.py makemigrations`   
-`python manage.py migrate`
-6. Create a superuser   
-`python manage.py createsuperuser --name admin`
-7. Run server   
-`python manage.py runserver`   
-or if you want to use a specific port    
-`python manage.py runserver 8000`
-8. Check if admin site works   
-`localhost:8000/admin`
-9. Read Django tutorial for further development
+# Brikard server
+Django + Postgre + Bootstrap (in development).
 
-### Some details
-This is a server shell. The frontend is located in `core/`, so the machinery 
-should be put in a separate directory `runner/` in the form of a python package.
+### HOWTO (docker)
+1. [Install Docker Community Edition](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/)    
+2. Install docker-compose into python3, e.g. `pip3 install --user docker-compose`    
+3. Add your user to the docker group. `sudo usermod -a -G docker username` ; you may have to reboot after this step for you to show up in the group.    
+    
+You can then use the `brikard-docker-compose` script as a drop in replacement for docker-compose. For example, to start the server you can run `brikard-docker-compose up --build`.    
 
+Cleaning up after docker for a clean rebuild:     
+1. `./cluspro-docker-compose rm` will remove the containers       
+2. `docker volume prune`      
+3. ssh into scc2 and remove you development jobs directory, likely by     
+   `rm -rf /projectnb/cluspro/dev/${USER}/jobs/*`    

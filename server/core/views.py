@@ -1,5 +1,7 @@
 import logging
+import json
 
+from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -7,14 +9,16 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password, ValidationError
 
 from .models import Job
-from .job_handling import check_job_input, create_job_dir, submit_job
+from .job_handling import check_user_input, create_job_dir, submit_job
 from . import env
 from . import forms
 from . import emails
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('core')
 
 
 def _get_client_ip(request):
@@ -37,23 +41,27 @@ def index(request):
             err_dict = form.errors.get_json_data(escape_html=True)
             errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
         else:
-            errs, tmp_dir = check_job_input(request)
+            errs, tmp_dir = check_user_input(request)
             errors += errs
 
-        if not errors:
-            job = Job(user=request.user,
-                      ip=_get_client_ip(request),
-                      status="L.STR",
-                      job_name=form.cleaned_data['jobname'])
-            job.save()
-            job.save()
+            if not errors:
+                job = Job(user=request.user,
+                          ip=_get_client_ip(request),
+                          status="L.STR",
+                          job_name=form.cleaned_data['jobname'])
+                job.save()
 
-            logger.info('Preparing job ..')
-            create_job_dir(tmp_dir, job.job_id)
+                create_job_dir(tmp_dir, job.job_id)
 
-            submit_job(job)
+                clean_json = job.get_user_json()
+                with open(clean_json, 'r') as f:
+                    details_json = json.load(f)
+                job.details_json = json.dumps(details_json)
+                job.status = 'L.STR'
+                job.save()
 
-            return redirect('queue')
+                submit_job(job.job_id)
+                return redirect('queue')
 
     else:
         form = forms.JobSubmitForm()
@@ -62,12 +70,23 @@ def index(request):
 
 
 @login_required(login_url='login')
+def restart_job(request):
+    job_id = int(request.GET.get('job_id'))
+    errors = submit_job(job_id)
+
+    if not errors:
+        return redirect('queue')
+
+    return HttpResponse('<h1>' + errors[0] + '</h1>')
+
+
+@login_required(login_url='login')
 def queue_page(request):
-    job_list = Job.objects.exclude(status__exact='L.CPL')
+    job_list = Job.objects.exclude(status__in=['L.CPL', 'R.ERR', 'L.ERR'])
     if not request.user.is_superuser:
         job_list = job_list.filter(user__username=request.user.username)
 
-    paginator = Paginator(job_list, env.JOBS_PER_PAGE)
+    paginator = Paginator(job_list.order_by('-job_id'), env.JOBS_PER_PAGE)
     page = request.GET.get('page')
     jobs = paginator.get_page(page)
     return render(request, 'core/jobs.html', {'jobs': jobs})
@@ -75,11 +94,11 @@ def queue_page(request):
 
 @login_required(login_url='login')
 def results_page(request):
-    job_list = Job.objects.filter(status__exact='L.CPL')
+    job_list = Job.objects.filter(status__in=['L.CPL', 'R.ERR', 'L.ERR'])
     if not request.user.is_superuser:
         job_list = job_list.filter(user__username=request.user.username)
 
-    paginator = Paginator(job_list, env.JOBS_PER_PAGE)
+    paginator = Paginator(job_list.order_by('-job_id'), env.JOBS_PER_PAGE)
     page = request.GET.get('page')
     jobs = paginator.get_page(page)
     return render(request, 'core/jobs.html', {'jobs': jobs})
@@ -95,6 +114,30 @@ def details_page(request):
         reject_access(request)
 
     return render(request, 'core/details.html', {'job': job})
+
+
+@login_required(login_url='login')
+def download_file(request):
+    user = request.user
+    job_id = request.GET.get('job_id')
+    content = request.GET.get('content')
+    job = Job.objects.get(job_id=job_id)
+
+    if not request.user.is_superuser and job.user.id != user.id:
+        reject_access(request)
+
+    output_dir = job.get_output_dir()
+    if content == 'output.txt':
+        file_path = output_dir.joinpath(content)
+        response = HttpResponse(content_type='plain/text')
+    else:
+        raise Http404('Wrong content type')
+
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(content)
+    with open(file_path, 'rb') as f:
+        response.write(f.read())
+
+    return response
 
 
 def reject_access(request):
@@ -113,28 +156,36 @@ def contact_page(request):
     return render(request, 'core/contact.html')
 
 
-def signup_page(request):
+def signup_page(request):  # TODO: add second password field
+    logout(request)
     errors = []
 
     if request.method == 'POST':
         form = forms.SignUpForm(request.POST)
 
-        if form.is_valid():
-            user = User(username=form.cleaned_data['username'],
-                        password=form.cleaned_data['password'],
-                        first_name=form.cleaned_data['first_name'],
-                        last_name=form.cleaned_data['last_name'],
-                        email=form.cleaned_data['email'])
-            try:
-                user.save()
-            except IntegrityError as e:
-                errors.append('Provided username already exists, please pick a different one')
-            else:
-                emails.send_greeting(user)
-                return redirect('thankyou')
-        else:
+        if not form.is_valid():
             err_dict = form.errors.get_json_data(escape_html=True)
             errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
+        else:
+            try:
+                validate_password(form.cleaned_data['password'])
+            except ValidationError as e:
+                logger.exception(e)
+                errors += e.messages
+            else:
+                user = User(username=form.cleaned_data['username'],
+                            password=make_password(form.cleaned_data['password']),
+                            first_name=form.cleaned_data['first_name'],
+                            last_name=form.cleaned_data['last_name'],
+                            email=form.cleaned_data['email'])
+                try:
+                    user.save()
+                except IntegrityError as e:
+                    errors.append('Provided username already exists, please pick a different one')
+                else:
+                    emails.send_greeting(user)
+                    return redirect('thankyou')
+
     else:
         form = forms.SignUpForm()
 
@@ -148,8 +199,18 @@ def thankyou_page(request):
 def login_page(request):
     logout(request)
 
-    if request.method == 'POST':
+    if request.GET.get('anon') == 'true':
+        username = 'anon'
+        password = '97531anonymous13579'
+        user = authenticate(request, username=username, password=password)
 
+        if user is not None:
+            login(request, user)
+            return redirect('index')
+        else:
+            return render(request, 'core/login.html', {'errors': ['Cannot use anonymous login']})
+
+    if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(request, username=username, password=password)

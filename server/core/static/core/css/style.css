@@ -3,11 +3,6 @@ body {
   padding-bottom: 20px;
 }
 
-.my-col-centered{
-    float: none;
-    margin: 0 auto;
-}
-
 .my-fixed-width {
     max-width: 500px;
     margin: 0 auto;
@@ -21,22 +16,29 @@ body {
 .my-signin-form {
     max-width: 300px;
     margin: 0 auto;
+    padding-left: 25px;
+    padding-right: 25px;
     float: none;
     margin-bottom: 25px;
 }
 
-.my-home-form {
-    max-width: 300px;
+.my-signup-form {
+    max-width: 500px;
     margin: 0 auto;
+    padding-left: 25px;
+    padding-right: 25px;
     float: none;
     margin-bottom: 25px;
 }
+
+
 
 
 .navbar {
   margin-bottom: 20px;
   margin-top: 20px;
 }
+
 
 
 
@@ -52,7 +54,6 @@ body {
   margin-bottom: 20px;
   margin-top: 20px;
 }
-
 
 
 
