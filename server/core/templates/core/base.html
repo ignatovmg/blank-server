@@ -99,16 +99,31 @@
                 <a href="#" class="close" data-dismiss="alert" aria-label="close">x</a>
                 <br>
                 {% for error in errors %}
-                    <div style="padding-left:20%">
-                        <strong>Error - </strong>{{ error }}
-                        <br><br>
+                    <br>
+                    <div>
+                        <p align="center"><strong>Error - </strong>{{ error }}</p>
                     </div>
+                    <br>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if messages %}
+            <div class="main-content error-popup alert alert-success alert-dismissable fade in">
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">x</a>
+                <br>
+                {% for message in messages %}
+                    <br>
+                    <div>
+                        <p align="center">{{ message }}</p>
+                    </div>
+                    <br>
                 {% endfor %}
             </div>
         {% endif %}
 
         {% block content %}{% endblock %}
 
+        <br><br>
         <div class="well well-lg text-center small">
             {{ SERVER_NAME }} should only be used for noncommercial purposes.
             <br>

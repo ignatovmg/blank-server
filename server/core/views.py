@@ -17,6 +17,7 @@ from .job_handling import check_user_input, create_job_dir, submit_job
 from . import env
 from . import forms
 from . import emails
+from . import utils
 
 logger = logging.getLogger('core')
 
@@ -38,7 +39,7 @@ def index(request):
         form = forms.JobSubmitForm(request.POST)
 
         if not form.is_valid():
-            err_dict = form.errors.get_json_data(escape_html=True)
+            err_dict = form.errors.get_json_data(escape_html=False)
             errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
         else:
             errs, tmp_dir = check_user_input(request)
@@ -164,7 +165,7 @@ def signup_page(request):  # TODO: add second password field
         form = forms.SignUpForm(request.POST)
 
         if not form.is_valid():
-            err_dict = form.errors.get_json_data(escape_html=True)
+            err_dict = form.errors.get_json_data(escape_html=False)
             errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
         else:
             try:
@@ -228,3 +229,62 @@ def logout_page(request):
     logout(request)
     return redirect('login')
 
+
+def reset_password_page(request):
+    logout(request)
+
+    errors = []
+    messages = []
+    form = forms.PasswordResetForm()
+
+    if request.method == 'POST':
+        form = forms.PasswordResetForm(request.POST)
+
+        if not form.is_valid():
+            err_dict = form.errors.get_json_data(escape_html=False)
+            errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
+        else:
+            try:
+                new_password = utils.random_string(10)
+                username = form.cleaned_data['username']
+                user = User.objects.get(username=username)
+                user.set_password(new_password)
+                emails.send_password(user, new_password)
+            except Exception as e:
+                logging.exception(e)
+                errors += ['Internal error has occured. Please contact us to solve the issue.']
+            else:
+                user.save()
+                messages += ['Your password was successfully reset, please check your e-mail.']
+                return render(request, 'core/login.html', {'messages': messages, 'form': form})
+
+    return render(request, 'core/reset_password.html', {'errors': errors, 'form': form})
+
+
+def retrieve_username_page(request):
+    logout(request)
+
+    errors = []
+    messages = []
+    form = forms.RetrieveUsernameForm()
+
+    if request.method == 'POST':
+        form = forms.RetrieveUsernameForm(request.POST)
+
+        if not form.is_valid():
+            err_dict = form.errors.get_json_data(escape_html=False)
+            errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
+        else:
+            try:
+                email = form.cleaned_data['email']
+                user = User.objects.get(email=email)
+                emails.send_username(user, user.username)
+            except Exception as e:
+                logging.exception(e)
+                errors += ['Internal error has occured. Please contact us to solve the issue.']
+            else:
+                user.save()
+                messages += ['Your username was sent to your e-mail address.']
+                return render(request, 'core/login.html', {'messages': messages, 'form': form})
+
+    return render(request, 'core/retrieve_username.html', {'errors': errors, 'form': form})

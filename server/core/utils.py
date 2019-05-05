@@ -17,7 +17,8 @@ def random_string(length=16):
     :return: Random string
     :rtype: str
     """
-    return ''.join([random.choice(string.printable) for n in range(length)])
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    return ''.join([random.choice(alphabet) for n in range(length)])
 
 
 def user_tmp_dir(username):

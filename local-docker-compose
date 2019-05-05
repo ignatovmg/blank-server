@@ -10,12 +10,8 @@ def get_params_user():
 
     params = {}
 
-    scc_host = input('Enter your remote hostname: [default: scc1.bu.edu] ').strip()
-    if not scc_host:
-        scc_host = 'scc1.bu.edu'
-
+    scc_host = input('Enter your remote hostname: ').strip()
     scc_user = input('Enter your remote username: ').strip()
-
     scc_password = getpass('Enter your remote password: ')
 
     example_storage = '/path/to/your/directory/jobs'

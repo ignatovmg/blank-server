@@ -18,16 +18,15 @@ def check_user_input(request):
     Creates a temporary directory in `env.STORAGE`/tmp and creates there user/ where
     the user input is stored. If any error is encountered, removes the directory.
 
-    :rtype: tuple(list, path.Path)
     :param request:
     :return: A tuple of 2 items - list of errors and a path to the temporary directory
+    :rtype: (list, path.Path)
     """
 
     tmp_dir = None
     try:
         error_list = []
 
-        ########################################
         # create a directory to store temporary results
         tmp_dir = user_tmp_dir(request.user.username)
         while tmp_dir.exists():
@@ -36,7 +35,6 @@ def check_user_input(request):
         tmp_dir.mkdir_p()
         logger.info('Creating %s' % tmp_dir)
 
-        ########################################
         # save user input
         user_dir = tmp_dir.joinpath('user')
         logger.info('Creating directory %s' % user_dir)
@@ -53,7 +51,6 @@ def check_user_input(request):
             fpath = user_dir.joinpath(name)
             upload_file(file, fpath)
 
-        ########################################
         # validate and transform raw user input into something
         # more useful (if needed)
         error_list += validate(user_dir)

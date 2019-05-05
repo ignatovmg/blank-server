@@ -44,7 +44,6 @@ class Job(models.Model):
     def reset(self):
         """
         Call this when a job is (re)started. Resets error and warning and increments 'restarted' field
-        :return: None
         """
         self.restarted += 1
         self.error = ''
@@ -69,7 +68,7 @@ class Job(models.Model):
 
     def get_user_dir(self):
         """
-        Get path to user directory of the job
+        Get path to the user directory
         :return: User directory
         :rtype: Path
         """

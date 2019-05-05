@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.password_validation import password_validators_help_text_html
 from django.core.validators import validate_slug, ValidationError
 import re
+from django.contrib.auth.models import User
 
 
 class JobSubmitForm(forms.Form):
@@ -18,6 +19,8 @@ class AcademicEmailField(forms.EmailField):
         super().validate(value)
         if not re.match('.*@.*\.edu', value):
             raise ValidationError('Your e-mail must belong to ".edu" domain group')
+        if User.objects.filter(email__exact=value).exists():
+            raise ValidationError('Provided email is already in the database')
 
 
 class SignUpForm(forms.Form):
@@ -46,3 +49,29 @@ class SignUpForm(forms.Form):
                                 max_length=100,
                                 required=False,
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
+
+
+def username_exists_validator(value):
+    if not User.objects.filter(username__exact=value).exists():
+        raise ValidationError('Sorry, provided username doesn\'t exist')
+
+
+class PasswordResetForm(forms.Form):
+    username = forms.CharField(label='Username',
+                               max_length=100,
+                               required=True,
+                               validators=[username_exists_validator],
+                               widget=forms.TextInput(attrs={'class': 'form-control'}))
+
+
+def email_exists_validator(value):
+    if not User.objects.filter(email__exact=value).exists():
+        raise ValidationError('Sorry, provided email doesn\'t exist in our database')
+
+
+class RetrieveUsernameForm(forms.Form):
+    email = forms.EmailField(label='E-mail *',
+                             required=True,
+                             help_text='Please provide academic e-mail address (*.edu)',
+                             validators=[email_exists_validator],
+                             widget=forms.EmailInput(attrs={'class': 'form-control'}))
