@@ -10,7 +10,6 @@ from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.password_validation import validate_password, ValidationError
 
 from .models import Job
 from .job_handling import check_user_input, create_job_dir, submit_job
@@ -40,7 +39,7 @@ def index(request):
 
         if not form.is_valid():
             err_dict = form.errors.get_json_data(escape_html=False)
-            errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
+            errors += ['{}'.format(v[0]['message']) for k, v in err_dict.items()]
         else:
             errs, tmp_dir = check_user_input(request)
             errors += errs
@@ -168,24 +167,19 @@ def signup_page(request):  # TODO: add second password field
             err_dict = form.errors.get_json_data(escape_html=False)
             errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
         else:
+            new_password = utils.random_string(10)
+            user = User(username=form.cleaned_data['username'],
+                        password=make_password(new_password),
+                        first_name=form.cleaned_data['first_name'],
+                        last_name=form.cleaned_data['last_name'],
+                        email=form.cleaned_data['email'])
             try:
-                validate_password(form.cleaned_data['password'])
-            except ValidationError as e:
-                logger.exception(e)
-                errors += e.messages
+                user.save()
+            except IntegrityError as e:
+                errors.append('Provided username already exists, please pick a different one')
             else:
-                user = User(username=form.cleaned_data['username'],
-                            password=make_password(form.cleaned_data['password']),
-                            first_name=form.cleaned_data['first_name'],
-                            last_name=form.cleaned_data['last_name'],
-                            email=form.cleaned_data['email'])
-                try:
-                    user.save()
-                except IntegrityError as e:
-                    errors.append('Provided username already exists, please pick a different one')
-                else:
-                    emails.send_greeting(user)
-                    return redirect('thankyou')
+                emails.send_greeting(user, new_password)
+                return redirect('thankyou')
 
     else:
         form = forms.SignUpForm()
@@ -209,7 +203,7 @@ def login_page(request):
             login(request, user)
             return redirect('index')
         else:
-            return render(request, 'core/login.html', {'errors': ['Cannot use anonymous login']})
+            return render(request, 'core/login.html', {'errors': ['Cannot use anonymous login due to internal error']})
 
     if request.method == 'POST':
         username = request.POST['username']
@@ -242,7 +236,7 @@ def reset_password_page(request):
 
         if not form.is_valid():
             err_dict = form.errors.get_json_data(escape_html=False)
-            errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
+            errors += ['{}'.format(v[0]['message']) for k, v in err_dict.items()]
         else:
             try:
                 new_password = utils.random_string(10)
@@ -273,12 +267,12 @@ def retrieve_username_page(request):
 
         if not form.is_valid():
             err_dict = form.errors.get_json_data(escape_html=False)
-            errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
+            errors += ['{}'.format(v[0]['message']) for k, v in err_dict.items()]
         else:
             try:
                 email = form.cleaned_data['email']
                 user = User.objects.get(email=email)
-                emails.send_username(user, user.username)
+                emails.send_username(user)
             except Exception as e:
                 logging.exception(e)
                 errors += ['Internal error has occured. Please contact us to solve the issue.']
@@ -288,3 +282,31 @@ def retrieve_username_page(request):
                 return render(request, 'core/login.html', {'messages': messages, 'form': form})
 
     return render(request, 'core/retrieve_username.html', {'errors': errors, 'form': form})
+
+
+@login_required(login_url='login')
+def settings_page(request):
+    if request.user.username == "anon":
+        reject_access(request)
+
+    errors = []
+    messages = []
+    form = forms.SettingsForm()
+    if request.method == 'POST':
+        form = forms.SettingsForm(request.POST)
+        if not form.is_valid():
+            err_dict = form.errors.get_json_data(escape_html=False)
+            errors += ['{}'.format(v[0]['message']) for k, v in err_dict.items()]
+        else:
+            new_password = form.cleaned_data['password']
+            try:
+                request.user.set_password(new_password)
+                request.user.save()
+            except Exception as e:
+                logger.exception(e)
+                errors += ['Internal error occured']
+            else:
+                messages += ['Your changes were successfully applied']
+                return render(request, 'core/settings.html', {'form': form, 'messages': messages})
+
+    return render(request, 'core/settings.html', {'form': form, 'errors': errors})

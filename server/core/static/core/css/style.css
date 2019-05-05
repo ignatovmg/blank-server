@@ -18,20 +18,22 @@ body {
     margin: 0 auto;
     padding-left: 25px;
     padding-right: 25px;
-    float: none;
     margin-bottom: 25px;
 }
 
 .my-signup-form {
-    max-width: 500px;
+    max-width: 400px;
     margin: 0 auto;
     padding-left: 25px;
     padding-right: 25px;
-    float: none;
     margin-bottom: 25px;
 }
 
-
+.my-generic-form {
+    max-width: 400px;
+    margin: auto;
+    padding: 25px;
+}
 
 
 .navbar {

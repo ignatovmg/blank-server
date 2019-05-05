@@ -79,12 +79,20 @@
                         </li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
-                        <li {% if request.resolver_match.url_name == "signup" %}class='active'{% endif %}>
-                            <a href={% url "signup" %}><span class="glyphicon glyphicon-user"></span>Sign Up</a>
-                        </li>
                         {% if user.is_authenticated %}
+                            {% if user.username != "anon" %}
+                                <li {% if request.resolver_match.url_name == "settings" %}class='active'{% endif %}>
+                                    <a href={% url "settings" %}><span class="glyphicon glyphicon-cog"></span>Settings</a>
+                                </li>
+                            {% endif %}
+
                             <li><a href={% url "logout" %}><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
                         {% else %}
+
+                            <li {% if request.resolver_match.url_name == "signup" %}class='active'{% endif %}>
+                            <a href={% url "signup" %}><span class="glyphicon glyphicon-user"></span>Sign Up</a>
+                            </li>
+
                             <li {% if request.resolver_match.url_name == "login" %}class='active'{% endif %}>
                                 <a href={% url "login" %}><span class="glyphicon glyphicon-log-in"></span> Login</a>
                             </li>

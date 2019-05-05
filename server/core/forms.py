@@ -1,8 +1,10 @@
 from django import forms
 from django.contrib.auth.password_validation import password_validators_help_text_html
-from django.core.validators import validate_slug, ValidationError
-import re
+from django.core.validators import ValidationError
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.models import User
+
+import re
 
 
 class JobSubmitForm(forms.Form):
@@ -29,15 +31,9 @@ class SignUpForm(forms.Form):
                                required=True,
                                widget=forms.TextInput(attrs={'class': 'form-control'}))
 
-    password = forms.CharField(label='Password *',
-                               max_length=100,
-                               required=True,
-                               help_text=password_validators_help_text_html(),
-                               widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-
     email = AcademicEmailField(label='E-mail *',
                                required=True,
-                               help_text='Please provide academic e-mail address (*.edu)',
+                               help_text='Please provide a valid academic e-mail address (*.edu), we will use it to send you your password',
                                widget=forms.EmailInput(attrs={'class': 'form-control'}))
 
     first_name = forms.CharField(label='First Name',
@@ -53,7 +49,7 @@ class SignUpForm(forms.Form):
 
 def username_exists_validator(value):
     if not User.objects.filter(username__exact=value).exists():
-        raise ValidationError('Sorry, provided username doesn\'t exist')
+        raise ValidationError('Sorry, we couldn\'t find the provided username')
 
 
 class PasswordResetForm(forms.Form):
@@ -66,12 +62,21 @@ class PasswordResetForm(forms.Form):
 
 def email_exists_validator(value):
     if not User.objects.filter(email__exact=value).exists():
-        raise ValidationError('Sorry, provided email doesn\'t exist in our database')
+        raise ValidationError('Sorry, provided email doesn\'t exist in the database')
 
 
 class RetrieveUsernameForm(forms.Form):
-    email = forms.EmailField(label='E-mail *',
+    email = forms.EmailField(label='E-mail',
                              required=True,
                              help_text='Please provide academic e-mail address (*.edu)',
                              validators=[email_exists_validator],
                              widget=forms.EmailInput(attrs={'class': 'form-control'}))
+
+
+class SettingsForm(forms.Form):
+    password = forms.CharField(label='Password',
+                               max_length=100,
+                               required=True,
+                               validators=[validate_password],
+                               help_text=password_validators_help_text_html(),
+                               widget=forms.PasswordInput(attrs={'class': 'form-control'}))

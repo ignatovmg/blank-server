@@ -17,5 +17,6 @@ urlpatterns = [
     path('download_file', views.download_file, name='download_file'),
     path('restart_job', views.restart_job, name='restart_job'),
     path('reset_password', views.reset_password_page, name='reset_password'),
-    path('retrieve_username', views.retrieve_username_page, name='retrieve_username')
+    path('retrieve_username', views.retrieve_username_page, name='retrieve_username'),
+    path('settings', views.settings_page, name='settings')
 ]
