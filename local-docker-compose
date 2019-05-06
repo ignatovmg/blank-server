@@ -10,6 +10,8 @@ def get_params_user():
 
     params = {}
 
+    print('You can just skip everything (Enter), it\'ll still work, except for the e-mails.')
+
     scc_host = input('Enter your remote hostname: ').strip()
     scc_user = input('Enter your remote username: ').strip()
     scc_password = getpass('Enter your remote password: ')
@@ -27,6 +29,7 @@ def get_params_user():
     if not local_port:
         local_port = '8080'
 
+    print('E-mail settings (if you skip, all e-mail actions will raise an error): ')
     email_host = input('Enter email server name [example: smtp.gmail.com]: ').strip()
     email_user = input('Enter email username [example: if your email is "username@gmail.com" - enter "username"]: ').strip()
     email_password = getpass('Enter your email password: ')
