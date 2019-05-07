@@ -16,6 +16,21 @@ class JobSubmitForm(forms.Form):
                                                             'placeholder': 'Job name'}))
 
 
+class SettingsForm(forms.Form):
+    current_password = forms.CharField(label='Current password',
+                                       max_length=100,
+                                       required=True,
+                                       help_text='Please enter your current password',
+                                       widget=forms.PasswordInput(attrs={'class': 'form-control _password'}))
+
+    password = forms.CharField(label='Password',
+                               max_length=100,
+                               required=True,
+                               validators=[validate_password],
+                               help_text=password_validators_help_text_html(),
+                               widget=forms.PasswordInput(attrs={'class': 'form-control _password'}))
+
+
 class AcademicEmailField(forms.EmailField):
     def validate(self, value):
         super().validate(value)
@@ -29,22 +44,26 @@ class SignUpForm(forms.Form):
     username = forms.CharField(label='Username *',
                                max_length=100,
                                required=True,
-                               widget=forms.TextInput(attrs={'class': 'form-control'}))
+                               widget=forms.TextInput(attrs={'class': 'form-control',
+                                                             'style': 'width: 40ch'}))
 
     email = AcademicEmailField(label='E-mail *',
                                required=True,
-                               help_text='Please provide a valid academic e-mail address (*.edu), we will use it to send you your password',
-                               widget=forms.EmailInput(attrs={'class': 'form-control'}))
+                               help_text='Please, provide a valid academic e-mail address (*.edu), we will use it to send you your password',
+                               widget=forms.EmailInput(attrs={'class': 'form-control',
+                                                              'style': 'width: 40ch'}))
 
     first_name = forms.CharField(label='First Name',
                                  max_length=100,
                                  required=False,
-                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
+                                 widget=forms.TextInput(attrs={'class': 'form-control',
+                                                               'style': 'width: 40ch'}))
 
     last_name = forms.CharField(label='Last Name',
                                 max_length=100,
                                 required=False,
-                                widget=forms.TextInput(attrs={'class': 'form-control'}))
+                                widget=forms.TextInput(attrs={'class': 'form-control',
+                                                              'style': 'width: 40ch'}))
 
 
 def username_exists_validator(value):
@@ -56,6 +75,7 @@ class PasswordResetForm(forms.Form):
     username = forms.CharField(label='Username',
                                max_length=100,
                                required=True,
+                               help_text='Please, provide your username',
                                validators=[username_exists_validator],
                                widget=forms.TextInput(attrs={'class': 'form-control'}))
 
@@ -68,15 +88,7 @@ def email_exists_validator(value):
 class RetrieveUsernameForm(forms.Form):
     email = forms.EmailField(label='E-mail',
                              required=True,
-                             help_text='Please provide academic e-mail address (*.edu)',
+                             help_text='Please, provide the academic e-mail address (*.edu), associated with your username',
                              validators=[email_exists_validator],
-                             widget=forms.EmailInput(attrs={'class': 'form-control'}))
+                             widget=forms.EmailInput(attrs={'class': 'form-control _email'}))
 
-
-class SettingsForm(forms.Form):
-    password = forms.CharField(label='Password',
-                               max_length=100,
-                               required=True,
-                               validators=[validate_password],
-                               help_text=password_validators_help_text_html(),
-                               widget=forms.PasswordInput(attrs={'class': 'form-control'}))

@@ -158,6 +158,11 @@ def contact_page(request):
 
 def signup_page(request):  # TODO: add second password field
     logout(request)
+
+    context = {'page_title': 'Sign Up',
+               'page_description': '',
+               'submit_text': 'Sign Up'}
+
     errors = []
 
     if request.method == 'POST':
@@ -184,7 +189,8 @@ def signup_page(request):  # TODO: add second password field
     else:
         form = forms.SignUpForm()
 
-    return render(request, 'core/signup.html', {'form': form, 'errors': errors})
+    context.update({'form': form, 'errors': errors})
+    return render(request, 'core/generic_form.html', context)
 
 
 def thankyou_page(request):
@@ -227,6 +233,10 @@ def logout_page(request):
 def reset_password_page(request):
     logout(request)
 
+    context = {'page_title': 'Reset password',
+               'page_description': 'We will send you a new password to the e-mail address, associated with the provided username',
+               'submit_text': 'Reset password'}
+
     errors = []
     messages = []
     form = forms.PasswordResetForm()
@@ -252,11 +262,16 @@ def reset_password_page(request):
                 messages += ['Your password was successfully reset, please check your e-mail.']
                 return render(request, 'core/login.html', {'messages': messages, 'form': form})
 
-    return render(request, 'core/reset_password.html', {'errors': errors, 'form': form})
+    context.update({'form': form, 'errors': errors})
+    return render(request, 'core/generic_form.html', context)
 
 
 def retrieve_username_page(request):
     logout(request)
+
+    context = {'page_title': 'Retrieve username',
+               'page_description': 'We will send your username to the e-mail address you specified at sign-up',
+               'submit_text': 'Remind me my username'}
 
     errors = []
     messages = []
@@ -281,13 +296,18 @@ def retrieve_username_page(request):
                 messages += ['Your username was sent to your e-mail address.']
                 return render(request, 'core/login.html', {'messages': messages, 'form': form})
 
-    return render(request, 'core/retrieve_username.html', {'errors': errors, 'form': form})
+    context.update({'form': form, 'errors': errors})
+    return render(request, 'core/generic_form.html', context)
 
 
 @login_required(login_url='login')
 def settings_page(request):
     if request.user.username == "anon":
         reject_access(request)
+
+    context = {'page_title': 'Settings',
+               'page_description': 'Change your account preferences here',
+               'submit_text': 'Save changes'}
 
     errors = []
     messages = []
@@ -298,15 +318,20 @@ def settings_page(request):
             err_dict = form.errors.get_json_data(escape_html=False)
             errors += ['{}'.format(v[0]['message']) for k, v in err_dict.items()]
         else:
-            new_password = form.cleaned_data['password']
-            try:
-                request.user.set_password(new_password)
-                request.user.save()
-            except Exception as e:
-                logger.exception(e)
-                errors += ['Internal error occured']
+            if not request.user.check_password(form.cleaned_data['current_password']):
+                errors += ['Wrong password provided']
             else:
-                messages += ['Your changes were successfully applied']
-                return render(request, 'core/settings.html', {'form': form, 'messages': messages})
+                new_password = form.cleaned_data['password']
+                try:
+                    request.user.set_password(new_password)
+                    request.user.save()
+                except Exception as e:
+                    logger.exception(e)
+                    errors += ['Internal error occured']
+                else:
+                    messages += ['Your changes were successfully applied']
+                    context.update({'form': form, 'messages': messages})
+                    return render(request, 'core/generic_form.html', context)
 
-    return render(request, 'core/settings.html', {'form': form, 'errors': errors})
+    context.update({'form': form, 'errors': errors})
+    return render(request, 'core/generic_form.html', context)
