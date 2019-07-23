@@ -21,6 +21,18 @@ def random_string(length=16):
     return ''.join([random.choice(alphabet) for n in range(length)])
 
 
+def random_string_alphanum(length=16):
+    """
+    Make a random string of given length
+
+    :param int length: String length
+    :return: Random string
+    :rtype: str
+    """
+    alphabet = string.ascii_letters + string.digits
+    return ''.join([random.choice(alphabet) for n in range(length)])
+
+
 def user_tmp_dir(username):
     """
     Make a random name for a temporary directory in env.TMP_DIR
@@ -28,7 +40,7 @@ def user_tmp_dir(username):
     :param `django.contrib.auth.models.User` username: Username to prepend the directory name with
     :return: Directory name
     """
-    return env.TMP_DIR.joinpath(username + '_' + random_string())
+    return env.TMP_DIR.joinpath(username + '_' + random_string_alphanum())
 
 
 def upload_file(f, name):

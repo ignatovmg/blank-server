@@ -80,7 +80,7 @@
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
                         {% if user.is_authenticated %}
-                            {% if user.username != "anon" %}
+                            {% if user.username != "anonym" %}
                                 <li {% if request.resolver_match.url_name == "settings" %}class='active'{% endif %}>
                                     <a href={% url "settings" %}><span class="glyphicon glyphicon-cog"></span>Settings</a>
                                 </li>

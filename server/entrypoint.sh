@@ -26,8 +26,8 @@ from django.contrib.auth.models import User
 if not User.objects.filter(username="admin").exists(): 
 	User.objects.create_superuser(username="admin", password="admin", email="")
 
-if not User.objects.filter(username="anon").exists():
-	User.objects.create_user(username="anon", password="97531anonymous13579", email="")
+if not User.objects.filter(username="anonym").exists():
+	User.objects.create_user(username="anonym", password="97531anonymous13579", email="")
 '''
 
 mkdir -p /storage/jobs && mkdir -p /storage/tmp

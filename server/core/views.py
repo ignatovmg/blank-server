@@ -200,8 +200,8 @@ def thankyou_page(request):
 def login_page(request):
     logout(request)
 
-    if request.GET.get('anon') == 'true':
-        username = 'anon'
+    if request.GET.get('anonym') == 'true':
+        username = 'anonym'
         password = '97531anonymous13579'
         user = authenticate(request, username=username, password=password)
 
@@ -302,7 +302,7 @@ def retrieve_username_page(request):
 
 @login_required(login_url='login')
 def settings_page(request):
-    if request.user.username == "anon":
+    if request.user.username == "anonym":
         reject_access(request)
 
     context = {'page_title': 'Settings',
