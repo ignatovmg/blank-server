@@ -26,7 +26,7 @@ SECRET_KEY = CONFIG['local']['SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '0.0.0.0', '192.168.1.3']
+ALLOWED_HOSTS = ['localhost', '0.0.0.0', '129.49.83.216']
 
 
 # Application definition
@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'django_celery_results'
 ]
 
 MIDDLEWARE = [
@@ -108,7 +110,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
@@ -159,10 +161,20 @@ DATABASES = {
     }
 }
 
-
+# Emails
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = CONFIG['email']['HOST']
 EMAIL_HOST_USER = CONFIG['email']['USER']
 EMAIL_HOST_PASSWORD = CONFIG['email']['PASS']
 EMAIL_PORT = CONFIG['email']['PORT']
+
+# Celery
+CELERY_BROKER_URL = 'amqp://rabbitmq_user:rabbitmq_pass123098@rabbitmq:5672//'
+CELERY_ALWAYS_EAGER = False
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_RESULT_PERSISTENT = True  # Results wont be lost after broker restart
+CELERY_RESULT_EXPIRES = 0  # tasks never expire

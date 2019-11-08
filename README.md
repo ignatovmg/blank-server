@@ -1,5 +1,5 @@
 # Server template
-Django + Postgre + Bootstrap (in development).
+Django + Postgres + Bootstrap (in development).
 
 ### Getting started
 1. [Install Docker Community Edition](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/)    
@@ -27,7 +27,7 @@ Docker runs 3 services: web (which runs Gunicorn), nginx and db (Postgres databa
 Gunicorn handles the python (Django) code, accesses the database and cooperates with Nginx. 
 
 #### Project stucture
-All the code is located in `server/`.
+All the frontend code is located in `server/`.
 The structure of `server/` directory is enforced by the Django rules, so we have
 `server/server`, where all the server settings locate (`settings.py`) as well as `config.py`. 
 `config.py` is where the custom variables are kept (e.g. email login 
@@ -37,6 +37,11 @@ The structure of `server/` directory is enforced by the Django rules, so we have
 the html files, `core/static` - CSS and JS, and `runner/` is a shell for your job 
 running code. Right now it contains a fake job running function, which doesn't 
 do much.
+
+The backend code is located in `backend/`. You must manually copy its content to the 
+backend server site to the directory you specified, when prompted at the first launch of 
+`local-docker-compose` ("Binary directory on the remote machine"). It will be copied 
+automatically in the future.
 
 #### `Core/` structure
 1. `views.py` is the main file - it contains all the page renderers and handles 

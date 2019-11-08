@@ -1,5 +1,4 @@
 {% extends "core/base.html" %}
-{% load static %}
 
 {% block content %}
     <div class="row my-fixed-width">
@@ -19,8 +18,8 @@
                 <tbody>
                 <tr>
                     <td>{{ job.job_id }}</td>
-                    <td>{{ job.job_name }}</td>
-                    <td>{{ job.user }}</td>
+                    <td>{{ job.job_name|slice:":20"|default:job.job_id }}{% if job.job_name|length > 20 %}..{% endif %}</td>
+                    <td>{{ job.user.username|slice:":20" }}{% if job.job_name|length > 20 %}..{% endif %}</td>
                     <td>{% if job.error %}{{ job.error }}{% else %}{{ job.get_status_display }}{% endif %}</td>
                 </tr>
                 </tbody>
@@ -32,21 +31,27 @@
             <h4 align="center">Details</h4>
             <br>
             {% if job.details_json %}
-                <p>Job name: {{ job.jobname }}</p>
+                <p>Summant 1: {{ job.summant1 }}</p>
+                <p>Summant 2: {{ job.summant2 }}</p>
             {% endif %}
         </div>
 
-        {% if job.status == 'L.CPL' %}
+        {% if job.status in job.STATUS_FINISHED %}
             <hr>
             <h4 align="center">Downloads</h4>
             <br>
+
+            {% if job.status == 'L.CPL' %}
+                <p align="center">Result: {{ job.get_result }}</p>
+                <br>
+            {% endif %}
+
             <div style="display: table; margin: auto">
                 <a style="width: 100%" type="button" class="btn btn-default"
-                   href="{% url 'download_file' %}?job_id={{ job.job_id }}&content=output.txt">
+                   href="{% url 'download_file' %}?job_id={{ job.job_id }}&content=log.txt">
                     <span class="glyphicon glyphicon-download-alt"></span>
-                    Download output.txt
+                    Download log
                 </a>
-                <br>
             </div>
         {% endif %}
         <br/><br/><br/>

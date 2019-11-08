@@ -1,20 +1,16 @@
 #!/bin/sh
 
 # wait for the database
-if [ "$LOCAL_DB_NAME" = "brikard" ]
-then
-    echo "Waiting for postgres..."
-
-    while ! nc -z $LOCAL_DB_HOST 5432; do
-      sleep 0.1
-    done
-
-    echo "PostgreSQL started"
-fi
+echo "Waiting for postgres..."
+while ! nc -z ${LOCAL_DB_HOST} 5432; do
+  sleep 0.1
+done
+echo "PostgreSQL started"
 
 # Add changes to the database
 python manage.py makemigrations --noinput
 python manage.py migrate --noinput
+python manage.py migrate django_celery_results --noinput  # celery tutorial says "celery_results", but it gives error
 
 # Copy all the static file to one directory (specified in settings.py)
 python manage.py collectstatic --no-input
@@ -30,6 +26,6 @@ if not User.objects.filter(username="anonym").exists():
 	User.objects.create_user(username="anonym", password="97531anonymous13579", email="")
 '''
 
-mkdir -p /storage/jobs && mkdir -p /storage/tmp
+mkdir -p /storage/jobs && mkdir -p /storage/tmp && mkdir -p ${LOCAL_STORAGE}/logs
 
 exec "$@"

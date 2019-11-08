@@ -4,9 +4,9 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title></title>
+    <title>{{ SERVER_NAME }}</title>
 
-    <meta name="viewport" http-equiv="content-type" content="text/html; charset=utf-8; width=device-width; initial-scale=1"/>
+    <meta name="viewport" http-equiv="content-type" content="text/html,charset=utf-8,width=device-width,initial-scale=1"/>
 
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css"/>
@@ -26,8 +26,8 @@
 
 {% autoescape on %}
 <body>
-    <div class="container" style="position: relative;">
-        <nav class="navbar navbar-inverse">
+    <div class="container-fluid" style="position: relative;">
+        <nav class="navbar navbar-inverse" style="margin-bottom: 0">
             <div class="container-fluid">
                 <div class="navbar-header">
                     <button type="button"
@@ -42,13 +42,13 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand">{{ SERVER_NAME }}</a>
+                    <a class="navbar-brand" href={% url "index" %}>{{ SERVER_NAME }}</a>
                 </div>
                 <div id="navbar" class="navbar-collapse collapse">
                     <ul class="nav navbar-nav">
                         {% if user.is_authenticated %}
                             <li {% if request.resolver_match.url_name == "index" %}class='active'{% endif %}>
-                                <a href={% url "index" %}>Home</a>
+                                <a href={% url "index" %}>Submit</a>
                             </li>
 
                             <li {% if request.resolver_match.url_name == "queue" %}class='active'{% endif %}>
@@ -58,31 +58,35 @@
                             <li {% if request.resolver_match.url_name == "results" %}class='active'{% endif %}>
                                 <a href={% url "results" %}>Results</a>
                             </li>
-
-                            {% if user.is_superuser %}
-                                <li {% if request.resolver_match.url_name == "admin" %}class='active'{% endif %}>
-                                    <a href="/admin">Admin</a>
-                                </li>
-                            {% endif %}
                         {% endif %}
 
                         <li {% if request.resolver_match.url_name == "publications" %}class='active'{% endif %}>
                             <a href={% url "publications" %}>Papers</a>
                         </li>
-
-                        <li {% if request.resolver_match.url_name == "help" %}class='active'{% endif %}>
-                            <a href={% url "help" %}>Help</a>
-                        </li>
-
+                    
                         <li {% if request.resolver_match.url_name == "contact" %}class='active'{% endif %}>
                             <a href={% url "contact" %}>Contact</a>
                         </li>
+
+                        {% if user.is_superuser %}
+                            <li {% if request.resolver_match.url_name == "admin" %}class='active'{% endif %}>
+                                <a href="/admin">Admin</a>
+                            </li>
+                            <li>
+                                <a href="/flower/">Monitor</a> {# TODO: not sure about the link name, check #}
+                            </li>
+                         {% endif %}
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
                         {% if user.is_authenticated %}
+                            <li>
+                                <a href=# style="cursor: auto">
+                                    <span class="glyphicon glyphicon-user"></span> Current user: <b>{{ user }}</b>
+                                </a>
+                            </li>
                             {% if user.username != "anonym" %}
                                 <li {% if request.resolver_match.url_name == "settings" %}class='active'{% endif %}>
-                                    <a href={% url "settings" %}><span class="glyphicon glyphicon-cog"></span>Settings</a>
+                                    <a href={% url "settings" %}><span class="glyphicon glyphicon-cog"></span> Settings</a>
                                 </li>
                             {% endif %}
 
@@ -90,7 +94,7 @@
                         {% else %}
 
                             <li {% if request.resolver_match.url_name == "signup" %}class='active'{% endif %}>
-                            <a href={% url "signup" %}><span class="glyphicon glyphicon-user"></span>Sign Up</a>
+                                <a href={% url "signup" %}><span class="glyphicon glyphicon-user"></span> Sign Up</a>
                             </li>
 
                             <li {% if request.resolver_match.url_name == "login" %}class='active'{% endif %}>
@@ -102,32 +106,34 @@
             </div>
         </nav>
 
-        {% if errors %}
-            <div class="main-content error-popup alert alert-danger alert-dismissable fade in">
-                <a href="#" class="close" data-dismiss="alert" aria-label="close">x</a>
-                <br>
-                {% for error in errors %}
+        {% autoescape off %}
+            {% if errors %}
+                <div class="main-content error-popup alert alert-danger alert-dismissable fade in">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">x</a>
                     <br>
-                    <div>
-                        <p align="center"><strong>Error - </strong>{{ error }}</p>
-                    </div>
+                    {% for error in errors %}
+                        <br>
+                        <div>
+                            <p align="center"><strong>Error - </strong>{{ error }}</p>
+                        </div>
+                        <br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if messages %}
+                <div class="main-content error-popup alert alert-success alert-dismissable fade in">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">x</a>
                     <br>
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% if messages %}
-            <div class="main-content error-popup alert alert-success alert-dismissable fade in">
-                <a href="#" class="close" data-dismiss="alert" aria-label="close">x</a>
-                <br>
-                {% for message in messages %}
-                    <br>
-                    <div>
-                        <p align="center">{{ message }}</p>
-                    </div>
-                    <br>
-                {% endfor %}
-            </div>
-        {% endif %}
+                    {% for message in messages %}
+                        <br>
+                        <div>
+                            <p align="center">{{ message }}</p>
+                        </div>
+                        <br>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endautoescape %}
 
         {% block content %}{% endblock %}
 
@@ -135,7 +141,7 @@
         <div class="well well-lg text-center small">
             {{ SERVER_NAME }} should only be used for noncommercial purposes.
             <br>
-            <a href='#'>Affiliations</a>
+            <a href="#">Group 1</a> and <a href="#">Group 2</a>.
         </div>
     </div>
 </body>

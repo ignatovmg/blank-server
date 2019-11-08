@@ -2,28 +2,85 @@
 {% load static %}
 
 {% block header_add %}
-    <link rel='stylesheet' type='text/css' href={% static "core/css/home.css" %} />
+    <link rel='stylesheet' type='text/css' href={% static "core/css/home.css" %} xmlns="http://www.w3.org/1999/html"/>
     <link rel='stylesheet' type='text/css' href={% static "core/css/spinner.css" %} />
-    <script src={% static "core/javascript/home.js" %}></script>
+    <link rel='stylesheet' type='text/css' href={% static "core/css/apple-checkbox.css" %} />
 {% endblock %}
 
 {% block content %}
-    <form class="form-jobs" enctype='multipart/form-data' action='index' method='post'>
+    <form class="form-jobs" enctype='multipart/form-data' action={% url "index" %} method='post'>
     {% csrf_token %}
-        {# Job name #}
-        <div class="input-group jobs-field">
-            {# Tooltip #}
-            <span class='input-group-addon'
-                  title="Job name"
-                  data-placement="auto left"
-                  data-toggle="popover"
-                  data-trigger="hover"
-                  data-content="Enter your job name here">
-                <a style="color:black;"><i class='glyphicon glyphicon-tags'></i></a>
-            </span>
+        <h1 align="center">Job submission</h1>
+        <br>
 
-            <input id="jobname" type='text' class='form-control input-md' name="jobname" placeholder="Job name" required autofocus/>
+        {# Job name #}
+        <div class="row">
+            <div class="col-sm-4 col-sm-offset-4">
+                <div class="form-group {% if form.job_name.errors %}has-error has-feedback{% endif %}"
+                     style="text-align: center;">
+                    <label for="id_job_name" style="font-weight: normal;">{{ form.job_name.label }}</label>
+                    <input class="form-control center-text"
+                           style="height: 40px; margin:auto;"
+                           type="text" name="job_name" id="id_job_name" placeholder="Job name" maxlength="100"/>
+                    {% if form.job_name.errors %}
+                        <span class="glyphicon glyphicon-remove form-control-feedback"></span>
+                    {% endif %}
+                    <p class="_help-text" align="center">{{ form.job_name.help_text }}</p>
+                </div>
+            </div>
         </div>
+
+        <br>
+
+        {# Parameters #}
+        <div class="row">
+            <div class="col-sm-4 col-sm-offset-2">
+                <div style="display: flex; justify-content: center; align-items: center">
+                    <div class="form-group {% if form.summant1.errors %}has-error has-feedback{% endif %}"
+                         style="text-align: center;">
+                            <label for="id_summant1" style="font-weight: normal;">{{ form.summant1.label }}</label>
+                            <input type="text"
+                                   class="form-control center-text"
+                                   style="margin:auto; height:40px;"
+                                   name="summant1" id="id_summant1" placeholder=2 maxlength="10000" required>
+                            {% if form.summant1.errors %}
+                                <span class="glyphicon glyphicon-remove form-control-feedback"></span>
+                            {% endif %}
+                        <p class="_help-text" align="center">{{ form.summant1.help_text }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div style="display: flex; justify-content: center; align-items: center">
+                    <div class="form-group {% if form.summant2.errors %}has-error has-feedback{% endif %}"
+                         style="text-align: center;">
+                            <label for="id_summant2" style="font-weight: normal;">{{ form.summant2.label }}</label>
+                            <input type="text"
+                                   class="form-control center-text"
+                                   style="margin:auto; height:40px;"
+                                   name="summant2" id="id_summant2" placeholder=6 maxlength="10000" required>
+                            {% if form.summant2.errors %}
+                                <span class="glyphicon glyphicon-remove form-control-feedback"></span>
+                            {% endif %}
+                        <p class="_help-text" align="center">{{ form.summant2.help_text }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br>
+        <hr>
+
+        {% if user.username == "anonym" %}
+            <div style="display: flex; justify-content: center">
+                <div class="form-group" style="margin: 0 auto; width: fit-content; width: -moz-fit-content">
+                    <input type="checkbox" id="id_noncommercial" class="ios8-switch ios8-switch-lg" required>
+                    <label for='id_noncommercial' style="font-weight: normal; line-height: 20px;">
+                        I will use {{ SERVER_NAME }} for non-commercial purposes only
+                    </label>
+                </div>
+            </div>
+        {% endif %}
 
         {# Submit button #}
         <div class="form-group jobs-submit text-center">
