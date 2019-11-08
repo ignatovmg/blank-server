@@ -14,13 +14,6 @@ CONFIG = {
         'PASS': os.getenv('EMAIL_PASS'),
         'PORT': 587
     },
-    "remote": {
-        'HOST': os.getenv('REMOTE_HOST'),
-        'USER': os.getenv('REMOTE_USER'),
-        'PASS': os.getenv('REMOTE_PASS'),
-        'STORAGE': os.getenv('REMOTE_STORAGE'),
-        'BIN': os.getenv('REMOTE_BIN'),
-    },
     "local": {
         'ROOT': os.getenv('LOCAL_ROOT'),
         'STORAGE': os.getenv('LOCAL_STORAGE'),

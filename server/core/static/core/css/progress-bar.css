@@ -14,6 +14,11 @@
     width: 10%;
 }
 
+.job-progress-running {
+    background: #007eef;
+    width: 50%;
+}
+
 .job-progress-complete {
     background: #51ad4c;
     width: 100%;
@@ -21,5 +26,10 @@
 
 .job-progress-error {
     background: lightcoral;
+    width: 100%;
+}
+
+.job-progress-no-template {
+    background: #fcd12a;
     width: 100%;
 }

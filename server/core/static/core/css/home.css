@@ -1,15 +1,9 @@
 
 .form-jobs {
-  max-width: 500px;
+  max-width: 80%;
   padding: 15px;
   margin: 0 auto;
   margin-bottom: 50px;
-}
-
-.jobs-field {
-  max-width: 300px;
-  padding: 5px;
-  margin: 0 auto;
 }
 
 .jobs-submit {
@@ -19,12 +13,8 @@
   margin-bottom: 30px;
 }
 
-.form-control {
-  position: relative;
-  height: auto;
-  -webkit-box-sizing: border-box;
-     -moz-box-sizing: border-box;
-          box-sizing: border-box;
-  padding: 10px;
-  font-size: 16px;
+.center-text {
+    text-align: center;
+    -moz-text-align-last: center; /* Firefox 12+ */
+    text-align-last: center;
 }

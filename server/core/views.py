@@ -1,8 +1,5 @@
-import logging
-import json
-
 from django.http import HttpResponse, Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -10,9 +7,14 @@ from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
 from django.contrib.auth.hashers import make_password
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+import logging
 
 from .models import Job
-from .job_handling import check_user_input, create_job_dir, submit_job
+from .serializers import JobSerializer
 from . import env
 from . import forms
 from . import emails
@@ -32,47 +34,41 @@ def _get_client_ip(request):
 
 @login_required(login_url='login')
 def index(request):
+    form = forms.JobSubmitForm()
     errors = []
 
     if request.method == 'POST':
-        form = forms.JobSubmitForm(request.POST)
+        form = forms.JobSubmitForm(request.POST, request.FILES)
 
         if not form.is_valid():
             err_dict = form.errors.get_json_data(escape_html=False)
-            errors += ['{}'.format(v[0]['message']) for k, v in err_dict.items()]
+            errors += [str(v[0]['message']) for k, v in err_dict.items()]
         else:
-            errs, tmp_dir = check_user_input(request)
-            errors += errs
+            # This stage we need, if there is some more complicated processing,
+            # for which a temporary directory is required. So a temp directory
+            # is created in storage/tmp and you can add some extra preparation/validation
+            # there. If there is no errors this temp dir is moved to storage/jobs and
+            # becomes permanent, otherwise it gets erased and user receives an error.
+            job = Job(user=request.user, ip=_get_client_ip(request), job_name=form.cleaned_data['job_name'])
+            errors += job.check_user_input(form, request.FILES)
 
             if not errors:
-                job = Job(user=request.user,
-                          ip=_get_client_ip(request),
-                          status="L.STR",
-                          job_name=form.cleaned_data['jobname'])
+                # start job
                 job.save()
-
-                create_job_dir(tmp_dir, job.job_id)
-
-                clean_json = job.get_user_json()
-                with open(clean_json, 'r') as f:
-                    details_json = json.load(f)
-                job.details_json = json.dumps(details_json)
-                job.status = 'L.STR'
-                job.save()
-
-                submit_job(job.job_id)
+                job.make_dir_and_start()
                 return redirect('queue')
 
-    else:
-        form = forms.JobSubmitForm()
+    context = {'errors': errors,
+               'form': form}
 
-    return render(request, 'core/home.html', {'errors': errors, 'form': form})
+    return render(request, 'core/home.html', context)
 
 
 @login_required(login_url='login')
 def restart_job(request):
     job_id = int(request.GET.get('job_id'))
-    errors = submit_job(job_id)
+    job = Job.objects.get(job_id=job_id)
+    errors = job.start()
 
     if not errors:
         return redirect('queue')
@@ -81,33 +77,49 @@ def restart_job(request):
 
 
 @login_required(login_url='login')
-def queue_page(request):
-    job_list = Job.objects.exclude(status__in=['L.CPL', 'R.ERR', 'L.ERR'])
+def cancel_job(request):
+    job_id = int(request.GET.get('job_id'))
+    job = Job.objects.get(job_id=job_id)
+    errors = job.cancel()
+
+    if not errors:
+        return redirect('queue')
+
+    return HttpResponse('<h1>' + errors[0] + '</h1>')
+
+
+def _jobs_page(request, job_list):
     if not request.user.is_superuser:
         job_list = job_list.filter(user__username=request.user.username)
 
-    paginator = Paginator(job_list.order_by('-job_id'), env.JOBS_PER_PAGE)
+    order_by = request.GET.get('order_by', '-job_id')
+    paginator = Paginator(job_list.order_by(order_by, '-job_id'), env.JOBS_PER_PAGE)
     page = request.GET.get('page')
     jobs = paginator.get_page(page)
-    return render(request, 'core/jobs.html', {'jobs': jobs})
+    return render(request, 'core/jobs.html', {'jobs': jobs, 'order_by': order_by})
+
+
+@login_required(login_url='login')
+def queue_page(request):
+    job_list = Job.objects.exclude(status__in=Job.STATUS_FINISHED)
+    return _jobs_page(request, job_list)
 
 
 @login_required(login_url='login')
 def results_page(request):
-    job_list = Job.objects.filter(status__in=['L.CPL', 'R.ERR', 'L.ERR'])
-    if not request.user.is_superuser:
-        job_list = job_list.filter(user__username=request.user.username)
-
-    paginator = Paginator(job_list.order_by('-job_id'), env.JOBS_PER_PAGE)
-    page = request.GET.get('page')
-    jobs = paginator.get_page(page)
-    return render(request, 'core/jobs.html', {'jobs': jobs})
+    job_list = Job.objects.filter(status__in=Job.STATUS_FINISHED)
+    return _jobs_page(request, job_list)
 
 
 @login_required(login_url='login')
 def details_page(request):
     job_id = request.GET.get('job_id')
-    job = Job.objects.get(job_id=job_id)
+    try:
+        job = Job.objects.get(job_id=job_id)
+    except Job.DoesNotExist:
+        reject_access(request)
+        return
+
     user = request.user
 
     if not request.user.is_superuser and job.user.id != user.id:
@@ -126,16 +138,14 @@ def download_file(request):
     if not request.user.is_superuser and job.user.id != user.id:
         reject_access(request)
 
-    output_dir = job.get_output_dir()
-    if content == 'output.txt':
-        file_path = output_dir.joinpath(content)
+    if content == 'log.txt':
         response = HttpResponse(content_type='plain/text')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(content)
+        with open(job.get_log_file(), 'rb') as f:
+            response.write(f.read())
+
     else:
         raise Http404('Wrong content type')
-
-    response['Content-Disposition'] = 'attachment; filename="{}"'.format(content)
-    with open(file_path, 'rb') as f:
-        response.write(f.read())
 
     return response
 
@@ -148,10 +158,6 @@ def publications_page(request):
     return render(request, 'core/publications.html')
 
 
-def help_page(request):
-    return render(request, 'core/help.html')
-
-
 def contact_page(request):
     return render(request, 'core/contact.html')
 
@@ -160,7 +166,7 @@ def signup_page(request):  # TODO: add second password field
     logout(request)
 
     context = {'page_title': 'Sign Up',
-               'page_description': '',
+               'page_description': '(you must provide your academic e-mail address)',
                'submit_text': 'Sign Up'}
 
     errors = []
@@ -170,10 +176,10 @@ def signup_page(request):  # TODO: add second password field
 
         if not form.is_valid():
             err_dict = form.errors.get_json_data(escape_html=False)
-            errors += ['{}: {}'.format(k, v[0]['message']) for k, v in err_dict.items()]
+            errors += [str(v[0]['message']) for k, v in err_dict.items()]
         else:
             new_password = utils.random_string(10)
-            user = User(username=form.cleaned_data['username'],
+            user = User(username=form.cleaned_data['email'],
                         password=make_password(new_password),
                         first_name=form.cleaned_data['first_name'],
                         last_name=form.cleaned_data['last_name'],
@@ -181,10 +187,10 @@ def signup_page(request):  # TODO: add second password field
             try:
                 user.save()
             except IntegrityError as e:
-                errors.append('Provided username already exists, please pick a different one')
+                errors.append(f'Failed to create a user, please <a href={reverse("contact")}>contact us</a>')
             else:
-                emails.send_greeting(user, new_password)
-                return redirect('thankyou')
+                emails.send_greeting(user, new_password)  # you can get SMTPAuthenticationError if you didnt switch
+                return redirect('thankyou')               # your google account to "less secure apps" mode
 
     else:
         form = forms.SignUpForm()
@@ -234,7 +240,7 @@ def reset_password_page(request):
     logout(request)
 
     context = {'page_title': 'Reset password',
-               'page_description': 'We will send you a new password to the e-mail address, associated with the provided username',
+               'page_description': 'We will send your new password to the provided e-mail address',
                'submit_text': 'Reset password'}
 
     errors = []
@@ -256,44 +262,10 @@ def reset_password_page(request):
                 emails.send_password(user, new_password)
             except Exception as e:
                 logging.exception(e)
-                errors += ['Internal error has occured. Please contact us to solve the issue.']
+                errors += [f'Internal error has occured. Please <a href={reverse("contact")}>contact us</a> to solve the issue.']
             else:
                 user.save()
                 messages += ['Your password was successfully reset, please check your e-mail.']
-                return render(request, 'core/login.html', {'messages': messages, 'form': form})
-
-    context.update({'form': form, 'errors': errors})
-    return render(request, 'core/generic_form.html', context)
-
-
-def retrieve_username_page(request):
-    logout(request)
-
-    context = {'page_title': 'Retrieve username',
-               'page_description': 'We will send your username to the e-mail address you specified at sign-up',
-               'submit_text': 'Remind me my username'}
-
-    errors = []
-    messages = []
-    form = forms.RetrieveUsernameForm()
-
-    if request.method == 'POST':
-        form = forms.RetrieveUsernameForm(request.POST)
-
-        if not form.is_valid():
-            err_dict = form.errors.get_json_data(escape_html=False)
-            errors += ['{}'.format(v[0]['message']) for k, v in err_dict.items()]
-        else:
-            try:
-                email = form.cleaned_data['email']
-                user = User.objects.get(email=email)
-                emails.send_username(user)
-            except Exception as e:
-                logging.exception(e)
-                errors += ['Internal error has occured. Please contact us to solve the issue.']
-            else:
-                user.save()
-                messages += ['Your username was sent to your e-mail address.']
                 return render(request, 'core/login.html', {'messages': messages, 'form': form})
 
     context.update({'form': form, 'errors': errors})
@@ -316,10 +288,11 @@ def settings_page(request):
         form = forms.SettingsForm(request.POST)
         if not form.is_valid():
             err_dict = form.errors.get_json_data(escape_html=False)
-            errors += ['{}'.format(v[0]['message']) for k, v in err_dict.items()]
+            errors += [str(v[0]['message']) for k, v in err_dict.items()]
         else:
             if not request.user.check_password(form.cleaned_data['current_password']):
                 errors += ['Wrong password provided']
+                form.add_error('current_password', 'Wrong password provided')
             else:
                 new_password = form.cleaned_data['password']
                 try:
@@ -327,7 +300,7 @@ def settings_page(request):
                     request.user.save()
                 except Exception as e:
                     logger.exception(e)
-                    errors += ['Internal error occured']
+                    errors += ['Internal error occurred']
                 else:
                     messages += ['Your changes were successfully applied']
                     context.update({'form': form, 'messages': messages})
@@ -335,3 +308,29 @@ def settings_page(request):
 
     context.update({'form': form, 'errors': errors})
     return render(request, 'core/generic_form.html', context)
+
+
+class JobViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+@api_view(['POST'])
+def api_submit(request):
+    permission_classes = [permissions.IsAdminUser]
+    form = forms.JobSubmitForm(request.POST, request.FILES)
+    if not form.is_valid():
+        return Response({'status': 'L.ERR', 'errors': form.errors.get_json_data(escape_html=True)}, status=status.HTTP_400_BAD_REQUEST)
+
+    job = Job(user=request.user, ip=_get_client_ip(request), job_name=form.cleaned_data['job_name'])
+    errs = job.check_user_input(form, request.FILES)
+
+    if errs:
+        return Response({'status': 'L.ERR', 'errors': form.errors.get_json_data(escape_html=True)}, status=status.HTTP_400_BAD_REQUEST)
+    job.save()
+
+    # start job
+    job.make_dir_and_start()
+
+    return Response({'job_id': job.job_id, 'status': job.status}, status=status.HTTP_201_CREATED)

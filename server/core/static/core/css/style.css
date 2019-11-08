@@ -1,8 +1,3 @@
-body {
-  padding-top: 20px;
-  padding-bottom: 20px;
-}
-
 .my-fixed-width {
     max-width: 500px;
     margin: 0 auto;
@@ -82,10 +77,37 @@ body {
 }
 
 
+.glow4 {
+    text-shadow: 0 0 5px white, 0 0 10px white, 0 0 20px white, 0 0 40px white;
+}
 
+.glow3 {
+    text-shadow: 0 0 5px white, 0 0 10px white, 0 0 20px white;
+}
 
+.glow2 {
+    text-shadow: 0 0 5px white, 0 0 10px white;
+}
 
+.glow1 {
+    text-shadow: 0 0 5px white;
+}
 
+.white-outline {
+    text-shadow:
+   -1px -1px 0 #ffffff,
+    1px -1px 0 #ffffff,
+    -1px 1px 0 #ffffff,
+     1px 1px 0 #ffffff;
+}
+
+.black-outline {
+    text-shadow:
+   -1px -1px 0 #000000,
+    1px -1px 0 #000000,
+    -1px 1px 0 #000000,
+     1px 1px 0 #000000;
+}
 
 
 
