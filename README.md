@@ -67,12 +67,14 @@ specified you will get an error, whenever the server is trying to send a message
  can refer to them in the templates.
  
 #### At the first launch
-Two users are created. 
-1) admin with password 'admin'. This is a superuser, you should change the 
-password for it immediately. The admin page is located at http://localhost/admin
-2) anon, which is where you log in once you click 'use without your own account' 
-button on the login page. It has limited permissions.
-3) `storage/` directory to keep the jobs.
+Two users are created.    
+
+1. admin with password 'admin'. This is a superuser, you should change the 
+password for it immediately. The admin page is located at http://localhost:8080/admin     
+2. anon, which is where you log in once you click 'use without your own account' 
+button on the login page. It has limited permissions.   
+    
+Also `storage/` directory is created in the root, where all the jobs will be kept.
 
 #### Jobs
 When you run jobs they are stored in docker container in `/storage`, which is 
