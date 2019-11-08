@@ -11,6 +11,8 @@
     <form class="form-jobs" enctype='multipart/form-data' action={% url "index" %} method='post'>
     {% csrf_token %}
         <h1 align="center">Job submission</h1>
+        <hr>
+        <h4 align="center">Add two numbers together</h4>
         <br>
 
         {# Job name #}
@@ -36,33 +38,33 @@
         <div class="row">
             <div class="col-sm-4 col-sm-offset-2">
                 <div style="display: flex; justify-content: center; align-items: center">
-                    <div class="form-group {% if form.summant1.errors %}has-error has-feedback{% endif %}"
+                    <div class="form-group {% if form.term1.errors %}has-error has-feedback{% endif %}"
                          style="text-align: center;">
-                            <label for="id_summant1" style="font-weight: normal;">{{ form.summant1.label }}</label>
+                            <label for="id_term1" style="font-weight: normal;">{{ form.term1.label }}</label>
                             <input type="text"
                                    class="form-control center-text"
                                    style="margin:auto; height:40px;"
-                                   name="summant1" id="id_summant1" placeholder=2 maxlength="10000" required>
-                            {% if form.summant1.errors %}
+                                   name="term1" id="id_term1" placeholder=2 maxlength="10000" required>
+                            {% if form.term1.errors %}
                                 <span class="glyphicon glyphicon-remove form-control-feedback"></span>
                             {% endif %}
-                        <p class="_help-text" align="center">{{ form.summant1.help_text }}</p>
+                        <p class="_help-text" align="center">{{ form.term1.help_text }}</p>
                     </div>
                 </div>
             </div>
             <div class="col-sm-4">
                 <div style="display: flex; justify-content: center; align-items: center">
-                    <div class="form-group {% if form.summant2.errors %}has-error has-feedback{% endif %}"
+                    <div class="form-group {% if form.term2.errors %}has-error has-feedback{% endif %}"
                          style="text-align: center;">
-                            <label for="id_summant2" style="font-weight: normal;">{{ form.summant2.label }}</label>
+                            <label for="id_term2" style="font-weight: normal;">{{ form.term2.label }}</label>
                             <input type="text"
                                    class="form-control center-text"
                                    style="margin:auto; height:40px;"
-                                   name="summant2" id="id_summant2" placeholder=6 maxlength="10000" required>
-                            {% if form.summant2.errors %}
+                                   name="term2" id="id_term2" placeholder=6 maxlength="10000" required>
+                            {% if form.term2.errors %}
                                 <span class="glyphicon glyphicon-remove form-control-feedback"></span>
                             {% endif %}
-                        <p class="_help-text" align="center">{{ form.summant2.help_text }}</p>
+                        <p class="_help-text" align="center">{{ form.term2.help_text }}</p>
                     </div>
                 </div>
             </div>

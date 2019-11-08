@@ -47,7 +47,7 @@ def submit_job(self, job_id):
             logger.info(f'Running {job.status}')
             sleep(10)
 
-            result = job.summant1 + job.summant2
+            result = job.term1 + job.term2
             outdir = job.get_output_dir()
             outdir.mkdir_p()
             job.get_result_file().write_text(str(result) + '\n')

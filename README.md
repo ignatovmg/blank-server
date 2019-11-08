@@ -92,7 +92,8 @@ Environmental variables with some paths, e-mail login and password are stored
 in `.local_params`, which are used when you run `local-docker-compose`. To create the 
 file use `.local_params_example` as a template.  
      
-Variables for sending e-mails. If you don't specify them you will get errors when new users register etc.
+Variables for sending e-mails. If you don't specify them, everything will still run, but you will 
+get errors when new users register etc.
 If your e-mail is `server@gmail.com` and the password is `password` then the values should be:   
       
 `EMAIL_USER` - server    

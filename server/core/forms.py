@@ -9,7 +9,7 @@ import re
 
 def validate(input):
     if input <= 0:
-        raise ValidationError('Summants must be > 0')
+        raise ValidationError('Term must be > 0')
 
 
 class JobSubmitForm(forms.Form):
@@ -18,21 +18,21 @@ class JobSubmitForm(forms.Form):
                                max_length=100,
                                required=False)
 
-    summant1 = forms.IntegerField(label='Summant 1 *',
-                                  help_text='Provide summant 1',
-                                  required=True,
-                                  validators=[validate])
+    term1 = forms.IntegerField(label='Term 1 *',
+                               help_text='Provide term 1',
+                               required=True,
+                               validators=[validate])
 
-    summant2 = forms.IntegerField(label='Summant 2 *',
-                                  help_text='Provide summant 2',
-                                  required=True,
-                                  validators=[validate])
+    term2 = forms.IntegerField(label='Term 2 *',
+                               help_text='Provide term 2',
+                               required=True,
+                               validators=[validate])
 
     def clean(self):
         cleaned_data = super().clean()
-        s1, s2 = cleaned_data.get('summant1'), cleaned_data.get('summant2')
+        s1, s2 = cleaned_data.get('term1'), cleaned_data.get('term2')
         if (s1 is not None) and (s2 is not None) and s2 % s1 != 0:
-            self.add_error('summant2', 'Summant 2 must be a multiple of Summant 1')
+            self.add_error('term2', 'Term 2 must be a multiple of Term 1')
 
         return cleaned_data
 
