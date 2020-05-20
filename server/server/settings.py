@@ -24,9 +24,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = CONFIG['local']['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = not CONFIG['production']
 
-ALLOWED_HOSTS = ['localhost', '0.0.0.0', '129.49.83.216']
+if CONFIG['production']:
+    ALLOWED_HOSTS = ['servertemplate.org']
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 
 
 # Application definition
@@ -170,7 +173,7 @@ EMAIL_HOST_PASSWORD = CONFIG['email']['PASS']
 EMAIL_PORT = CONFIG['email']['PORT']
 
 # Celery
-CELERY_BROKER_URL = 'amqp://rabbitmq_user:rabbitmq_pass123098@rabbitmq:5672//'
+CELERY_BROKER_URL = f"amqp://{CONFIG['rabbit']['USER']}:{CONFIG['rabbit']['PASS']}@rabbitmq:5672//"
 CELERY_ALWAYS_EAGER = False
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -178,3 +181,7 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_RESULT_PERSISTENT = True  # Results wont be lost after broker restart
 CELERY_RESULT_EXPIRES = 0  # tasks never expire
+
+if CONFIG['production']:
+    ADMINS = [('servertemplate', 'servertemplate@gmail.com')]
+    SERVER_EMAIL = 'servertemplate@gmail.com'

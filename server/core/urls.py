@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework import routers
 from . import views
 
@@ -23,6 +23,7 @@ urlpatterns = [
     path('cancel_job', views.cancel_job, name='cancel_job'),
     path('reset_password', views.reset_password_page, name='reset_password'),
     path('settings', views.settings_page, name='settings'),
+    re_path('^flower/.*', views.flower, name='flower'),
     path('', include(router.urls)),
     path('api/submit/', views.api_submit),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),

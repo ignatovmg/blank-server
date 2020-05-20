@@ -1,12 +1,11 @@
 {% extends "core/base.html" %}
-{% load static %}
 
 {% block content %}
 
-<div class="jumbotron" style="background-color: rgba(126,166,237,0.8)">
-	<h1 style="color: black">Welcome to {{ SERVER_NAME }}</h1>
-	<p style="color:black; font-weight: normal">Template server</p>
-    <a class="btn btn-md btn-default" style="white-space: normal; background: rgba(255,255,255,0.77)" href="{% url 'login' %}?anonym=true">
+<div class="jumbotron">
+	<h1>Welcome to {{ SERVER_NAME }}</h1>
+	<p>Template web-server you can do whatever you want with</p>
+    <a class="btn btn-md btn-default" href="{% url 'login' %}?anonym=true" style="max-width: 100%">
         Use the server without the benefits of your own account &raquo;
     </a>
 </div>

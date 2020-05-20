@@ -55,8 +55,10 @@ class SettingsForm(forms.Form):
 class AcademicEmailField(forms.EmailField):
     def validate(self, value):
         super().validate(value)
-        if not re.match(r'.*@.*\.edu', value):
-            raise ValidationError('Your e-mail must belong to ".edu" domain group')
+        # List based on Wikipedia (https://en.wikipedia.org/wiki/.edu_(second-level_domain) and https://en.wikipedia.org/wiki/.edu_(second-level_domain))
+        tld_good = (r'\.edu$', r'\.edu\.[a-z]+$', r'\.ac\.[a-z]+$')
+        if not any(re.match(r'^.*@.*'+tld, value) for tld in tld_good):
+            raise ValidationError('Your e-mail must belong to an academic domain (.edu, .edu.*, .ac.*)')
         if User.objects.filter(email__exact=value).exists():
             raise ValidationError('Provided email is already in the database')
 
@@ -65,7 +67,7 @@ class SignUpForm(forms.Form):
     email = AcademicEmailField(label='E-mail *',
                                required=True,
                                max_length=1000,
-                               help_text='Please, provide a valid academic e-mail address (*.edu), we will use it to send you your password',
+                               help_text='Please, provide a valid academic e-mail address (.edu, .edu.*, .ac.*), we will use it to send you your password',
                                widget=forms.EmailInput(attrs={'class': 'form-control',
                                                               'style': 'width: 40ch'}))
 

@@ -102,7 +102,7 @@ If your e-mail is `server@gmail.com` and the password is `password` then the val
 `EMAIL_PASS` - password     
 `EMAIL_HOST` - smtp.gmail.com
       
-`FLOWER_USER` and `FLOWER_PASS` will be generated and added to `.local_params` at the first run of `local-docker-compose`, unless 
+`RABBITMQ_USER` and `RABBITMQ_PASS` will be generated and added to `.local_params` at the first run of `local-docker-compose`, unless 
  specified by the user.
      
 `LOCAL_PORT` is the port, through which you access the server (default is `8080`)

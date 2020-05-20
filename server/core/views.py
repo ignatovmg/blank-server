@@ -2,7 +2,8 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
@@ -64,6 +65,7 @@ def index(request):
     return render(request, 'core/home.html', context)
 
 
+@user_passes_test(lambda u: u.is_superuser, 'reject')
 @login_required(login_url='login')
 def restart_job(request):
     job_id = int(request.GET.get('job_id'))
@@ -76,6 +78,7 @@ def restart_job(request):
     return HttpResponse('<h1>' + errors[0] + '</h1>')
 
 
+@user_passes_test(lambda u: u.is_superuser, 'reject')
 @login_required(login_url='login')
 def cancel_job(request):
     job_id = int(request.GET.get('job_id'))
@@ -119,6 +122,8 @@ def details_page(request):
     except Job.DoesNotExist:
         reject_access(request)
         return
+    except ValueError:
+        return HttpResponse(status=status.HTTP_422_UNPROCESSABLE_ENTITY, content='Invalid job_id: should be integer')
 
     user = request.user
 
@@ -151,7 +156,7 @@ def download_file(request):
 
 
 def reject_access(request):
-    raise PermissionDenied('Sorry, you don\'t have a permission to access this page')
+    raise PermissionDenied('You don\'t have permission to access this page')
 
 
 def publications_page(request):
@@ -189,8 +194,10 @@ def signup_page(request):  # TODO: add second password field
             except IntegrityError as e:
                 errors.append(f'Failed to create a user, please <a href={reverse("contact")}>contact us</a>')
             else:
-                emails.send_greeting(user, new_password)  # you can get SMTPAuthenticationError if you didnt switch
-                return redirect('thankyou')               # your google account to "less secure apps" mode
+                # you can get SMTPAuthenticationError if you didnt switch your google account to "less secure apps" mode
+                emails.send_greeting(user, new_password)
+                context.update({'email': user.email})
+                return render(request, 'core/thankyou.html', context)
 
     else:
         form = forms.SignUpForm()
@@ -262,7 +269,7 @@ def reset_password_page(request):
                 emails.send_password(user, new_password)
             except Exception as e:
                 logging.exception(e)
-                errors += [f'Internal error has occured. Please <a href={reverse("contact")}>contact us</a> to solve the issue.']
+                errors += [f'Internal error has occurred. Please <a href={reverse("contact")}>contact us</a> to solve the issue.']
             else:
                 user.save()
                 messages += ['Your password was successfully reset, please check your e-mail.']
@@ -272,11 +279,9 @@ def reset_password_page(request):
     return render(request, 'core/generic_form.html', context)
 
 
+@user_passes_test(lambda u: u.username != 'anonym', 'reject')
 @login_required(login_url='login')
 def settings_page(request):
-    if request.user.username == "anonym":
-        reject_access(request)
-
     context = {'page_title': 'Settings',
                'page_description': 'Change your account preferences here',
                'submit_text': 'Save changes'}
@@ -308,6 +313,17 @@ def settings_page(request):
 
     context.update({'form': form, 'errors': errors})
     return render(request, 'core/generic_form.html', context)
+
+
+@csrf_exempt  # TODO: Let's hope this is safe. Otherwise django doesn't let flower make ajax requests
+@user_passes_test(lambda u: u.is_superuser, 'reject')
+@login_required(login_url='login')
+def flower(request):
+    response = HttpResponse()
+    path = request.get_full_path()
+    path = path.replace('flower', '_flower_internal', 1)
+    response['X-Accel-Redirect'] = path
+    return response
 
 
 class JobViewSet(viewsets.ReadOnlyModelViewSet):

@@ -31,18 +31,3 @@ def send_password(user, password):
               server_email,
               [user.email],
               fail_silently=False)
-
-
-def send_username(user):
-    """
-    Send a new password
-    :param `django.contrib.auth.models.User` user: Receiver
-    """
-
-    message = 'Dear user,\n\nYou requested a username reminder. Your username is \n\n{}\n'.format(user.username)
-    server_email = None
-    send_mail('Your username for {}'.format(env.SERVER_NAME),
-              message,
-              server_email,
-              [user.email],
-              fail_silently=False)
